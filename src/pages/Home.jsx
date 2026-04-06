@@ -85,7 +85,7 @@ function Home() {
             </div>
             <div className="entry-note-card">
               <span>During the game</span>
-              <strong>Only live actions stay on screen when your turn comes.</strong>
+              <strong>Raise, chaal, fold, or see cards when your turn comes.</strong>
             </div>
           </div>
         </section>
