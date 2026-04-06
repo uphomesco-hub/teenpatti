@@ -1,4 +1,4 @@
-import { createDeck } from './cards';
+import { createDeck, RANKS, SUITS } from './cards';
 import { compareTeenPattiHands, evaluateBestTeenPattiHand } from './evaluator';
 import { buildConfigFromPreset, normalizeConfig } from './variants';
 
@@ -52,6 +52,46 @@ function getPlayerCards(room, player) {
   return player.hand.map((cardId) => room.cardsById[cardId]).filter(Boolean);
 }
 
+function sampleOne(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function resolveRoundJokers(config) {
+  const activeJokerRanks = Array.from(
+    new Set([
+      ...(config.jokerRanks || []),
+      ...(config.randomJokerRank ? [sampleOne(RANKS)] : []),
+    ]),
+  ).sort((left, right) => right - left);
+  const activeJokerSuits = Array.from(
+    new Set([
+      ...(config.jokerSuits || []),
+      ...(config.randomJokerSuit ? [sampleOne(SUITS).value] : []),
+    ]),
+  );
+
+  return {
+    activeJokerRanks,
+    activeJokerSuits,
+  };
+}
+
+function getRoundJokerSettings(room) {
+  return {
+    jokerRanks: room.round?.activeJokerRanks || room.config.jokerRanks || [],
+    jokerSuits: room.round?.activeJokerSuits || room.config.jokerSuits || [],
+    specialHandMode: room.config.specialHandMode || 'standard',
+  };
+}
+
+function isJokerCard(room, card) {
+  const jokerSettings = getRoundJokerSettings(room);
+  return (
+    jokerSettings.jokerRanks.includes(card.rank) ||
+    jokerSettings.jokerSuits.includes(card.suit)
+  );
+}
+
 function serializeCard(room, cardId) {
   const card = room.cardsById[cardId];
   if (!card) {
@@ -64,7 +104,7 @@ function serializeCard(room, cardId) {
     suit: card.suit,
     suitSymbol: card.suitSymbol,
     label: card.label,
-    isJoker: room.config.jokerRanks.includes(card.rank),
+    isJoker: isJokerCard(room, card),
   };
 }
 
@@ -79,7 +119,7 @@ function serializeBestHand(room, cards) {
     suit: card.suit,
     suitSymbol: card.suitSymbol || '',
     label: card.label || `${card.rank}`,
-    isJoker: room.config.jokerRanks.includes(card.rank),
+    isJoker: isJokerCard(room, card),
   }));
 }
 
@@ -102,7 +142,7 @@ function serializeDiscardCards(room, cards) {
     suit: card.suit,
     suitSymbol: card.suitSymbol || '',
     label: card.label || `${card.rank}`,
-    isJoker: room.config.jokerRanks.includes(card.rank),
+    isJoker: isJokerCard(room, card),
   }));
 }
 
@@ -179,7 +219,7 @@ function evaluateWinner(room, leftPlayer, rightPlayer) {
   const comparison = compareTeenPattiHands(
     getPlayerCards(room, leftPlayer),
     getPlayerCards(room, rightPlayer),
-    room.config.jokerRanks,
+    getRoundJokerSettings(room),
     room.config.assumedWildCards,
     room.config.handRankingMode,
   );
@@ -448,6 +488,7 @@ export function startRound(room, playerId) {
   const cardsNeeded = eligiblePlayers.length * room.config.cardsDealt;
   const deckCount = Math.max(1, Math.ceil(cardsNeeded / 52));
   const deck = createDeck(deckCount);
+  const resolvedJokers = resolveRoundJokers(room.config);
   room.cardsById = deck.cardsById;
   room.drawPile = deck.drawPile;
   room.round = {
@@ -459,6 +500,8 @@ export function startRound(room, playerId) {
     actionPlayerId: '',
     winnerId: '',
     showAllCards: false,
+    activeJokerRanks: resolvedJokers.activeJokerRanks,
+    activeJokerSuits: resolvedJokers.activeJokerSuits,
   };
 
   assignSeats(room);
@@ -488,6 +531,22 @@ export function startRound(room, playerId) {
     room,
     `Round ${room.round.number} started with ${deckCount} deck${deckCount === 1 ? '' : 's'}. Boot is ${room.config.bootAmount}, pot is ${room.round.pot}, and ${opener.name} acts first.`,
   );
+
+  if (room.config.specialHandMode === 'kiss_miss') {
+    pushHistory(room, 'Kiss Miss is active. Make two kiss/miss pairs from 5 cards and the leftover rank decides the trail.');
+  } else if (room.round.activeJokerRanks.length || room.round.activeJokerSuits.length) {
+    pushHistory(
+      room,
+      `Active jokers this round: ${
+        [
+          room.round.activeJokerRanks.length ? `ranks ${room.round.activeJokerRanks.join(', ')}` : '',
+          room.round.activeJokerSuits.length ? `suits ${room.round.activeJokerSuits.join(', ')}` : '',
+        ]
+          .filter(Boolean)
+          .join(' • ')
+      }.`,
+    );
+  }
 
   if (room.phase === 'betting') {
     pushHistory(room, 'Betting is live. Everyone starts blind until they look at their cards.');
@@ -816,7 +875,7 @@ function serializePlayer(room, player, isSelf) {
   const handScore = revealCards && player.hand.length >= room.config.cardsToKeep
     ? evaluateBestTeenPattiHand(
         getPlayerCards(room, player),
-        room.config.jokerRanks,
+        getRoundJokerSettings(room),
         room.config.cardsToKeep,
         room.config.assumedWildCards,
         room.config.handRankingMode,
@@ -875,7 +934,7 @@ function serializeSideShowReveal(room, playerId) {
   const requestorHand = requestor?.hand?.length >= room.config.cardsToKeep
     ? evaluateBestTeenPattiHand(
         getPlayerCards(room, requestor),
-        room.config.jokerRanks,
+        getRoundJokerSettings(room),
         room.config.cardsToKeep,
         room.config.assumedWildCards,
         room.config.handRankingMode,
@@ -884,7 +943,7 @@ function serializeSideShowReveal(room, playerId) {
   const targetHand = target?.hand?.length >= room.config.cardsToKeep
     ? evaluateBestTeenPattiHand(
         getPlayerCards(room, target),
-        room.config.jokerRanks,
+        getRoundJokerSettings(room),
         room.config.cardsToKeep,
         room.config.assumedWildCards,
         room.config.handRankingMode,
@@ -941,7 +1000,7 @@ export function serializeRoomForPlayer(room, playerId) {
   const viewerBestHand = canViewerSeeHand && viewer?.hand?.length >= room.config.cardsToKeep
     ? evaluateBestTeenPattiHand(
         getPlayerCards(room, viewer),
-        room.config.jokerRanks,
+        getRoundJokerSettings(room),
         room.config.cardsToKeep,
         room.config.assumedWildCards,
         room.config.handRankingMode,
@@ -965,6 +1024,9 @@ export function serializeRoomForPlayer(room, playerId) {
           dealerPlayerId: room.round.dealerPlayerId,
           actionPlayerId: room.round.actionPlayerId,
           showAllCards: room.round.showAllCards,
+          activeJokerRanks: room.round.activeJokerRanks || [],
+          activeJokerSuits: room.round.activeJokerSuits || [],
+          specialHandMode: room.config.specialHandMode,
         }
       : null,
     players: room.players

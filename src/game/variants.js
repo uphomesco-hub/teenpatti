@@ -10,8 +10,13 @@ const PRESETS = [
       cardsToKeep: 3,
       assumedWildCards: 0,
       jokerRanks: [],
+      jokerSuits: [],
+      randomJokerRank: false,
+      randomJokerSuit: false,
       sideShowEnabled: true,
       showEnabled: true,
+      handRankingMode: 'classic',
+      specialHandMode: 'standard',
     },
   },
   {
@@ -25,9 +30,13 @@ const PRESETS = [
       cardsToKeep: 3,
       assumedWildCards: 0,
       jokerRanks: [14, 13, 4, 7],
+      jokerSuits: [],
+      randomJokerRank: false,
+      randomJokerSuit: false,
       sideShowEnabled: true,
       showEnabled: true,
       handRankingMode: 'classic',
+      specialHandMode: 'standard',
     },
   },
   {
@@ -41,9 +50,33 @@ const PRESETS = [
       cardsToKeep: 3,
       assumedWildCards: 0,
       jokerRanks: [],
+      jokerSuits: [],
+      randomJokerRank: false,
+      randomJokerSuit: false,
       sideShowEnabled: true,
       showEnabled: true,
       handRankingMode: 'muflis',
+      specialHandMode: 'standard',
+    },
+  },
+  {
+    id: 'kiss-miss',
+    name: 'Kiss Miss',
+    summary: 'Deal 5 cards. Two kiss/miss pairs make jokers and the fifth card decides the trail.',
+    config: {
+      bootAmount: 20,
+      startingChips: 1500,
+      cardsDealt: 5,
+      cardsToKeep: 5,
+      assumedWildCards: 0,
+      jokerRanks: [],
+      jokerSuits: [],
+      randomJokerRank: false,
+      randomJokerSuit: false,
+      sideShowEnabled: true,
+      showEnabled: true,
+      handRankingMode: 'classic',
+      specialHandMode: 'kiss_miss',
     },
   },
   {
@@ -57,9 +90,13 @@ const PRESETS = [
       cardsToKeep: 3,
       assumedWildCards: 0,
       jokerRanks: [],
+      jokerSuits: [],
+      randomJokerRank: false,
+      randomJokerSuit: false,
       sideShowEnabled: true,
       showEnabled: true,
       handRankingMode: 'classic',
+      specialHandMode: 'standard',
     },
   },
   {
@@ -73,9 +110,13 @@ const PRESETS = [
       cardsToKeep: 2,
       assumedWildCards: 1,
       jokerRanks: [],
+      jokerSuits: [],
+      randomJokerRank: false,
+      randomJokerSuit: false,
       sideShowEnabled: true,
       showEnabled: true,
       handRankingMode: 'classic',
+      specialHandMode: 'standard',
     },
   },
 ];
@@ -88,9 +129,13 @@ export const DEFAULT_CONFIG = {
   cardsToKeep: 3,
   assumedWildCards: 0,
   jokerRanks: [],
+  jokerSuits: [],
+  randomJokerRank: false,
+  randomJokerSuit: false,
   sideShowEnabled: true,
   showEnabled: true,
   handRankingMode: 'classic',
+  specialHandMode: 'standard',
   minPlayers: 2,
   maxPlayers: 10,
 };
@@ -109,6 +154,13 @@ export const RANK_OPTIONS = [
   { value: 4, label: '4' },
   { value: 3, label: '3' },
   { value: 2, label: '2' },
+];
+
+export const SUIT_OPTIONS = [
+  { value: 'spades', label: 'Spades' },
+  { value: 'hearts', label: 'Hearts' },
+  { value: 'diamonds', label: 'Diamonds' },
+  { value: 'clubs', label: 'Clubs' },
 ];
 
 function clamp(value, min, max) {
@@ -132,15 +184,18 @@ export function buildConfigFromPreset(presetId) {
 }
 
 export function normalizeConfig(input = {}) {
-  const finalHandSize = 3;
-  const requestedCardsDealt = clamp(Number(input.cardsDealt || DEFAULT_CONFIG.cardsDealt), 1, 10);
+  const specialHandMode = input.specialHandMode === 'kiss_miss' ? 'kiss_miss' : 'standard';
+  const finalHandSize = specialHandMode === 'kiss_miss' ? 5 : 3;
+  const requestedCardsDealt = specialHandMode === 'kiss_miss'
+    ? 5
+    : clamp(Number(input.cardsDealt || DEFAULT_CONFIG.cardsDealt), 1, 10);
   const cardsToKeep = clamp(
-    Number(input.cardsToKeep || DEFAULT_CONFIG.cardsToKeep),
+    specialHandMode === 'kiss_miss' ? 5 : Number(input.cardsToKeep || DEFAULT_CONFIG.cardsToKeep),
     1,
     Math.min(finalHandSize, requestedCardsDealt),
   );
   const assumedWildCards = clamp(
-    Number(input.assumedWildCards ?? finalHandSize - cardsToKeep),
+    specialHandMode === 'kiss_miss' ? 0 : Number(input.assumedWildCards ?? finalHandSize - cardsToKeep),
     0,
     finalHandSize - cardsToKeep,
   );
@@ -152,6 +207,13 @@ export function normalizeConfig(input = {}) {
         .filter((rank) => Number.isInteger(rank) && rank >= 2 && rank <= 14),
     ),
   ).sort((left, right) => right - left);
+  const jokerSuits = Array.from(
+    new Set(
+      (input.jokerSuits || []).filter((suit) =>
+        SUIT_OPTIONS.some((option) => option.value === suit),
+      ),
+    ),
+  );
 
   return {
     tableName: String(input.tableName || DEFAULT_CONFIG.tableName).slice(0, 48) || DEFAULT_CONFIG.tableName,
@@ -161,9 +223,13 @@ export function normalizeConfig(input = {}) {
     cardsToKeep,
     assumedWildCards,
     jokerRanks,
+    jokerSuits,
+    randomJokerRank: Boolean(input.randomJokerRank),
+    randomJokerSuit: Boolean(input.randomJokerSuit),
     sideShowEnabled: true,
     showEnabled: true,
     handRankingMode: input.handRankingMode === 'muflis' ? 'muflis' : 'classic',
+    specialHandMode,
     minPlayers: DEFAULT_CONFIG.minPlayers,
     maxPlayers: DEFAULT_CONFIG.maxPlayers,
   };
@@ -180,4 +246,14 @@ export function formatJokerRanks(ranks) {
   }
 
   return ranks.map((rank) => formatRank(rank)).join(', ');
+}
+
+export function formatJokerSuits(suits) {
+  if (!suits?.length) {
+    return 'None';
+  }
+
+  return suits
+    .map((suit) => SUIT_OPTIONS.find((entry) => entry.value === suit)?.label || suit)
+    .join(', ');
 }

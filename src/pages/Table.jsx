@@ -4,8 +4,10 @@ import {
   buildConfigFromPreset,
   getPresetList,
   formatJokerRanks,
+  formatJokerSuits,
   normalizeConfig,
   RANK_OPTIONS,
+  SUIT_OPTIONS,
 } from '../game/variants';
 import { clearStoredToken, getStoredToken, setStoredToken } from '../lib/storage';
 import { emitGameCommand, socket } from '../lib/transport';
@@ -280,6 +282,17 @@ function Table() {
     );
   }
 
+  function toggleJokerSuit(suit) {
+    setConfigDraft((current) =>
+      normalizeConfig({
+        ...current,
+        jokerSuits: current.jokerSuits.includes(suit)
+          ? current.jokerSuits.filter((entry) => entry !== suit)
+          : [...current.jokerSuits, suit],
+      }),
+    );
+  }
+
   const players = roomState?.players || [];
   const me = players.find((player) => player.id === roomState?.you?.playerId) || null;
   const activeTurnPlayer = players.find((player) => player.id === roomState?.round?.actionPlayerId) || null;
@@ -326,6 +339,7 @@ function Table() {
             setChipDrafts((current) => ({ ...current, [playerId]: value }))
           }
           onToggleJokerRank={toggleJokerRank}
+          onToggleJokerSuit={toggleJokerSuit}
           onSaveRules={saveRules}
           onUpdatePlayerStack={updatePlayerStack}
           onStartRound={startRound}
@@ -349,6 +363,7 @@ function Table() {
           onSubmitCommand={submitCommand}
           onSetConfigDraft={setConfigDraft}
           onToggleJokerRank={toggleJokerRank}
+          onToggleJokerSuit={toggleJokerSuit}
           onSaveRules={saveRules}
           onStartRound={startRound}
           isFinished={isFinished}
@@ -366,6 +381,7 @@ function LobbyView({
   onSetConfigDraft,
   onChangeChipDraft,
   onToggleJokerRank,
+  onToggleJokerSuit,
   onSaveRules,
   onUpdatePlayerStack,
   onStartRound,
@@ -437,6 +453,7 @@ function LobbyView({
                     type="number"
                     min="1"
                     max="10"
+                    disabled={configDraft.specialHandMode === 'kiss_miss'}
                     value={configDraft.cardsDealt}
                     onChange={(event) =>
                       onSetConfigDraft(normalizeConfig({ ...configDraft, cardsDealt: Number(event.target.value) }))
@@ -450,7 +467,8 @@ function LobbyView({
                     className="lounge-input"
                     type="number"
                     min="1"
-                    max="3"
+                    max={configDraft.specialHandMode === 'kiss_miss' ? '5' : '3'}
+                    disabled={configDraft.specialHandMode === 'kiss_miss'}
                     value={configDraft.cardsToKeep}
                     onChange={(event) =>
                       onSetConfigDraft(normalizeConfig({ ...configDraft, cardsToKeep: Number(event.target.value) }))
@@ -466,30 +484,15 @@ function LobbyView({
 
               <div className="rules-summary-card">
                 <div className="rules-summary-kicker">Current table shape</div>
-                <div className="rules-summary-line">
-                  Deal {configDraft.cardsDealt}, keep {configDraft.cardsToKeep}, assume {configDraft.assumedWildCards}
-                </div>
-                <div className="rules-summary-line">Jokers: {formatJokerRanks(configDraft.jokerRanks)}</div>
+                {renderVariationSummary(configDraft)}
               </div>
 
-              <label className="lounge-field">
-                <span>Joker Cards</span>
-                <div className="rank-grid">
-                  {RANK_OPTIONS.map((rank) => (
-                    <button
-                      key={rank.value}
-                      type="button"
-                      className={`rank-pill ${configDraft.jokerRanks.includes(rank.value) ? 'rank-pill-active' : ''}`}
-                      onClick={() => onToggleJokerRank(rank.value)}
-                    >
-                      {rank.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="rank-help">
-                  Selected ranks act as jokers in that variation. A = Ace, K = King, Q = Queen, J = Jack.
-                </div>
-              </label>
+              <JokerConfigurator
+                configDraft={configDraft}
+                onSetConfigDraft={onSetConfigDraft}
+                onToggleJokerRank={onToggleJokerRank}
+                onToggleJokerSuit={onToggleJokerSuit}
+              />
 
               <div className="lobby-note">
                 Blind/seen betting, side show, and show are always enabled at this table.
@@ -508,10 +511,7 @@ function LobbyView({
                 <div className="rules-summary-line">{livePreset?.name || 'Custom'}</div>
                 <div className="rules-summary-line">Boot: {formatExactChips(roomState.config.bootAmount)}</div>
                 <div className="rules-summary-line">Starting chips: {formatExactChips(roomState.config.startingChips)}</div>
-                <div className="rules-summary-line">
-                  Deal {roomState.config.cardsDealt}, keep {roomState.config.cardsToKeep}, assume {roomState.config.assumedWildCards}
-                </div>
-                <div className="rules-summary-line">Jokers: {formatJokerRanks(roomState.config.jokerRanks)}</div>
+                {renderVariationSummary(roomState.config)}
               </div>
 
               <div className="lobby-note">
@@ -601,6 +601,7 @@ function GameView({
   onSubmitCommand,
   onSetConfigDraft,
   onToggleJokerRank,
+  onToggleJokerSuit,
   onSaveRules,
   onStartRound,
   isFinished,
@@ -611,6 +612,7 @@ function GameView({
   const crowdedTable = otherPlayers.length >= 5;
   const canStartNextRound = Boolean(isFinished && roomState?.you?.isHost);
   const draftPreset = detectPreset(configDraft);
+  const activeJokerText = describeActiveJokers(roomState);
   const winnerDisplayName = winnerPlayer?.id === me?.id ? 'You' : winnerPlayer?.name || 'Player';
   const turnBannerText = activeTurnPlayer
     ? activeTurnPlayer.id === me?.id
@@ -804,13 +806,13 @@ function GameView({
           </div>
           <div className="pot-badge">{currentPreset?.name || 'Custom'} • Boot {formatChips(roomState.config.bootAmount)}</div>
           <div className="pot-mode">
-            {roomState.config.handRankingMode === 'muflis' ? 'Muflis Lowball: Lowest hand wins' : 'Standard ranking'}
+            {roomState.config.specialHandMode === 'kiss_miss'
+              ? 'Kiss Miss: two kiss/miss pairs become jokers, leftover card decides the trail'
+              : roomState.config.handRankingMode === 'muflis'
+                ? 'Muflis Lowball: Lowest hand wins'
+                : 'Standard ranking'}
           </div>
-          <div className="pot-jokers">
-            {roomState.config.jokerRanks?.length
-              ? `Jokers: ${formatJokerRanks(roomState.config.jokerRanks)}`
-              : 'No Jokers'}
-          </div>
+          <div className="pot-jokers">{activeJokerText}</div>
         </div>
 
         {latestEvent ? (
@@ -1011,6 +1013,7 @@ function GameView({
                           type="number"
                           min="1"
                           max="10"
+                          disabled={configDraft.specialHandMode === 'kiss_miss'}
                           value={configDraft.cardsDealt}
                           onChange={(event) =>
                             onSetConfigDraft(normalizeConfig({ ...configDraft, cardsDealt: Number(event.target.value) }))
@@ -1024,7 +1027,8 @@ function GameView({
                           className="lounge-input"
                           type="number"
                           min="1"
-                          max="3"
+                          max={configDraft.specialHandMode === 'kiss_miss' ? '5' : '3'}
+                          disabled={configDraft.specialHandMode === 'kiss_miss'}
                           value={configDraft.cardsToKeep}
                           onChange={(event) =>
                             onSetConfigDraft(normalizeConfig({ ...configDraft, cardsToKeep: Number(event.target.value) }))
@@ -1033,25 +1037,14 @@ function GameView({
                       </label>
                     </div>
 
-                    <div className="next-round-config-copy">
-                      Side show and show stay on for every round.
-                    </div>
+                    <div className="next-round-config-copy">Side show and show stay on for every round.</div>
 
-                    <div className="next-round-ranks">
-                      {RANK_OPTIONS.map((rank) => (
-                        <button
-                          key={rank.value}
-                          type="button"
-                          className={`rank-pill ${configDraft.jokerRanks.includes(rank.value) ? 'rank-pill-active' : ''}`}
-                          onClick={() => onToggleJokerRank(rank.value)}
-                        >
-                          {rank.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="rank-help">
-                      These are joker cards for the next round. A = Ace, K = King, Q = Queen, J = Jack.
-                    </div>
+                    <JokerConfigurator
+                      configDraft={configDraft}
+                      onSetConfigDraft={onSetConfigDraft}
+                      onToggleJokerRank={onToggleJokerRank}
+                      onToggleJokerSuit={onToggleJokerSuit}
+                    />
                   </div>
 
                   <div className="winner-showcase-actions">
@@ -1228,6 +1221,81 @@ function TopBar({ roomId, onLeave, onCopyInvite, inviteCopied }) {
   );
 }
 
+function JokerConfigurator({ configDraft, onSetConfigDraft, onToggleJokerRank, onToggleJokerSuit }) {
+  if (configDraft.specialHandMode === 'kiss_miss') {
+    return (
+      <div className="lobby-note">
+        Kiss Miss always deals 5 cards. Make two kiss/miss pairs like 2-3 or 4-6. Those four cards become jokers,
+        and the leftover card decides your trail rank.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <label className="lounge-field">
+        <span>Joker Number Cards</span>
+        <div className="rank-grid">
+          {RANK_OPTIONS.map((rank) => (
+            <button
+              key={rank.value}
+              type="button"
+              className={`rank-pill ${configDraft.jokerRanks.includes(rank.value) ? 'rank-pill-active' : ''}`}
+              onClick={() => onToggleJokerRank(rank.value)}
+            >
+              {rank.label}
+            </button>
+          ))}
+        </div>
+      </label>
+
+      <label className="lounge-field">
+        <span>Joker Color Cards</span>
+        <div className="rank-grid">
+          {SUIT_OPTIONS.map((suit) => (
+            <button
+              key={suit.value}
+              type="button"
+              className={`rank-pill ${configDraft.jokerSuits.includes(suit.value) ? 'rank-pill-active' : ''}`}
+              onClick={() => onToggleJokerSuit(suit.value)}
+            >
+              {suit.label}
+            </button>
+          ))}
+        </div>
+      </label>
+
+      <div className="lounge-field">
+        <span>Random Jokers</span>
+        <div className="rank-grid">
+          <button
+            type="button"
+            className={`rank-pill ${configDraft.randomJokerRank ? 'rank-pill-active' : ''}`}
+            onClick={() =>
+              onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerRank: !configDraft.randomJokerRank }))
+            }
+          >
+            Random Number
+          </button>
+          <button
+            type="button"
+            className={`rank-pill ${configDraft.randomJokerSuit ? 'rank-pill-active' : ''}`}
+            onClick={() =>
+              onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerSuit: !configDraft.randomJokerSuit }))
+            }
+          >
+            Random Color
+          </button>
+        </div>
+        <div className="rank-help">
+          Selected ranks and suits stay jokers. Random options add one extra random rank or one extra random suit at
+          round start.
+        </div>
+      </div>
+    </>
+  );
+}
+
 function detectPreset(config) {
   if (!config) {
     return null;
@@ -1237,15 +1305,78 @@ function detectPreset(config) {
 
   return (
     getPresetList().find(
-      (preset) =>
-        normalizeConfig(preset.config).cardsDealt === normalizedConfig.cardsDealt &&
-        normalizeConfig(preset.config).cardsToKeep === normalizedConfig.cardsToKeep &&
-        normalizeConfig(preset.config).assumedWildCards === normalizedConfig.assumedWildCards &&
-        normalizeConfig(preset.config).handRankingMode === normalizedConfig.handRankingMode &&
-        JSON.stringify(normalizeConfig(preset.config).jokerRanks || []) ===
-          JSON.stringify(normalizedConfig.jokerRanks || []),
+      (preset) => {
+        const presetConfig = normalizeConfig(preset.config);
+        return (
+          presetConfig.cardsDealt === normalizedConfig.cardsDealt &&
+          presetConfig.cardsToKeep === normalizedConfig.cardsToKeep &&
+          presetConfig.assumedWildCards === normalizedConfig.assumedWildCards &&
+          presetConfig.handRankingMode === normalizedConfig.handRankingMode &&
+          presetConfig.specialHandMode === normalizedConfig.specialHandMode &&
+          JSON.stringify(presetConfig.jokerRanks || []) === JSON.stringify(normalizedConfig.jokerRanks || []) &&
+          JSON.stringify(presetConfig.jokerSuits || []) === JSON.stringify(normalizedConfig.jokerSuits || []) &&
+          presetConfig.randomJokerRank === normalizedConfig.randomJokerRank &&
+          presetConfig.randomJokerSuit === normalizedConfig.randomJokerSuit
+        );
+      },
     ) || { name: 'Custom', id: 'custom' }
   );
+}
+
+function renderVariationSummary(config) {
+  const lines = [];
+
+  if (config.specialHandMode === 'kiss_miss') {
+    lines.push(<div key="shape" className="rules-summary-line">Kiss Miss deals 5 cards and uses all 5.</div>);
+    lines.push(
+      <div key="kiss-miss" className="rules-summary-line">
+        Two kiss/miss pairs become jokers and the leftover card decides the trail.
+      </div>,
+    );
+    return lines;
+  }
+
+  lines.push(
+    <div key="deal" className="rules-summary-line">
+      Deal {config.cardsDealt}, keep {config.cardsToKeep}, assume {config.assumedWildCards}
+    </div>,
+  );
+  lines.push(
+    <div key="ranks" className="rules-summary-line">
+      Number jokers: {formatJokerRanks(config.jokerRanks)}
+      {config.randomJokerRank ? ' + Random' : ''}
+    </div>,
+  );
+  lines.push(
+    <div key="suits" className="rules-summary-line">
+      Color jokers: {formatJokerSuits(config.jokerSuits)}
+      {config.randomJokerSuit ? ' + Random' : ''}
+    </div>,
+  );
+
+  return lines;
+}
+
+function describeActiveJokers(roomState) {
+  if (roomState?.config?.specialHandMode === 'kiss_miss') {
+    return 'Kiss/Miss jokers: two kiss or miss pairs turn into jokers. The leftover card becomes your trail rank.';
+  }
+
+  const rankText = formatJokerRanks(roomState?.round?.activeJokerRanks || roomState?.config?.jokerRanks || []);
+  const suitText = formatJokerSuits(roomState?.round?.activeJokerSuits || roomState?.config?.jokerSuits || []);
+  const hasRanks = rankText !== 'None';
+  const hasSuits = suitText !== 'None';
+
+  if (!hasRanks && !hasSuits) {
+    return 'No Jokers';
+  }
+
+  return [
+    hasRanks ? `Numbers: ${rankText}` : '',
+    hasSuits ? `Colors: ${suitText}` : '',
+  ]
+    .filter(Boolean)
+    .join(' • ');
 }
 
 function initialsFor(name) {

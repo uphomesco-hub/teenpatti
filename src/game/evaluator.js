@@ -56,6 +56,29 @@ function getStraightValue(ranks) {
   return 0;
 }
 
+function normalizeJokerSettings(input) {
+  if (Array.isArray(input)) {
+    return {
+      jokerRanks: input,
+      jokerSuits: [],
+      specialHandMode: 'standard',
+    };
+  }
+
+  return {
+    jokerRanks: input?.jokerRanks || [],
+    jokerSuits: input?.jokerSuits || [],
+    specialHandMode: input?.specialHandMode === 'kiss_miss' ? 'kiss_miss' : 'standard',
+  };
+}
+
+function isConfiguredJoker(card, jokerSettings) {
+  return (
+    jokerSettings.jokerRanks.includes(card.rank) ||
+    jokerSettings.jokerSuits.includes(card.suit)
+  );
+}
+
 function evaluateConcreteHand(cards, jokerCountUsed) {
   const ranks = cards.map((card) => card.rank);
   const suits = cards.map((card) => card.suit);
@@ -141,12 +164,12 @@ function evaluateConcreteHand(cards, jokerCountUsed) {
   };
 }
 
-function buildCandidates(cards, jokerRanks, assumedWildCards = 0) {
+function buildCandidates(cards, jokerSettings, assumedWildCards = 0) {
   const concrete = [];
   const jokers = [];
 
   for (const card of cards) {
-    if (jokerRanks.includes(card.rank)) {
+    if (isConfiguredJoker(card, jokerSettings)) {
       jokers.push({
         source: 'joker',
         card,
@@ -167,7 +190,7 @@ function buildCandidates(cards, jokerRanks, assumedWildCards = 0) {
   }
 
   if (!jokers.length) {
-    return [{ cards: concrete, jokerCountUsed: 0 }];
+    return [{ cards: concrete, jokerCountUsed: 0, assumedCards: [] }];
   }
 
   const substitutions = [];
@@ -211,23 +234,6 @@ function buildCandidates(cards, jokerRanks, assumedWildCards = 0) {
   return candidates;
 }
 
-export function evaluateTeenPattiHand(cards, jokerRanks = [], assumedWildCards = 0) {
-  let best = null;
-
-  for (const candidate of buildCandidates(cards, jokerRanks, assumedWildCards)) {
-    const score = evaluateConcreteHand(candidate.cards, candidate.jokerCountUsed);
-    if (!best || compareScores(score, best) > 0) {
-      best = {
-        ...score,
-        assumedCards: candidate.assumedCards,
-        resolvedCards: candidate.cards,
-      };
-    }
-  }
-
-  return best;
-}
-
 function combinations(items, size) {
   const results = [];
 
@@ -248,9 +254,153 @@ function combinations(items, size) {
   return results;
 }
 
+function getPairKind(leftCard, rightCard) {
+  const gap = Math.abs(leftCard.rank - rightCard.rank);
+  if (gap === 1) {
+    return 'kiss';
+  }
+  if (gap === 2) {
+    return 'miss';
+  }
+  return null;
+}
+
+function pairKindLabel(pairKinds) {
+  const kissCount = pairKinds.filter((kind) => kind === 'kiss').length;
+  const missCount = pairKinds.filter((kind) => kind === 'miss').length;
+  if (kissCount === 2) {
+    return 'Two Kisses';
+  }
+  if (missCount === 2) {
+    return 'Two Misses';
+  }
+  return 'Kiss + Miss';
+}
+
+function pairKindStrength(pairKinds) {
+  const label = pairKindLabel(pairKinds);
+  if (label === 'Two Kisses') {
+    return 3;
+  }
+  if (label === 'Kiss + Miss') {
+    return 2;
+  }
+  return 1;
+}
+
+function evaluateKissMissHand(cards, rankingMode = 'classic') {
+  if (!cards?.length) {
+    return null;
+  }
+
+  const fallbackScore = evaluateBestTeenPattiHand(cards, [], 3, 0, 'classic');
+  if (cards.length < 5) {
+    return {
+      category: 'kissMissDead',
+      categoryRank: 0,
+      tiebreaker: [0],
+      label: 'No Kiss/Miss Trail',
+      isKissMissValid: false,
+      fallbackScore,
+    };
+  }
+
+  let best = null;
+
+  for (const firstPair of combinations(cards, 2)) {
+    const firstKind = getPairKind(firstPair[0], firstPair[1]);
+    if (!firstKind) {
+      continue;
+    }
+
+    const remaining = cards.filter((card) => !firstPair.some((entry) => entry.id === card.id));
+    for (const secondPair of combinations(remaining, 2)) {
+      const secondKind = getPairKind(secondPair[0], secondPair[1]);
+      if (!secondKind) {
+        continue;
+      }
+
+      const leftover = remaining.find((card) => !secondPair.some((entry) => entry.id === card.id));
+      if (!leftover) {
+        continue;
+      }
+
+      const pairKinds = [firstKind, secondKind];
+      const current = {
+        category: 'kissMissTrail',
+        categoryRank: 7,
+        tiebreaker: [leftover.rank, pairKindStrength(pairKinds)],
+        label: `Trail ${formatRank(leftover.rank)} via ${pairKindLabel(pairKinds)}`,
+        isKissMissValid: true,
+        leftoverCard: leftover,
+        pairingCards: [...firstPair, ...secondPair],
+        pairKinds,
+        fallbackScore,
+      };
+
+      if (!best || compareScoresForMode(current, best, rankingMode) > 0) {
+        best = current;
+      }
+    }
+  }
+
+  if (best) {
+    return best;
+  }
+
+  return {
+    category: 'kissMissDead',
+    categoryRank: 0,
+    tiebreaker: [0],
+    label: 'No Kiss/Miss Trail',
+    isKissMissValid: false,
+    fallbackScore,
+  };
+}
+
+function compareKissMissScores(left, right, rankingMode = 'classic') {
+  if (left.isKissMissValid && !right.isKissMissValid) {
+    return 1;
+  }
+  if (!left.isKissMissValid && right.isKissMissValid) {
+    return -1;
+  }
+  if (left.isKissMissValid && right.isKissMissValid) {
+    return compareScoresForMode(left, right, rankingMode);
+  }
+  return compareScoresForMode(left.fallbackScore, right.fallbackScore, rankingMode);
+}
+
+export function evaluateTeenPattiHand(
+  cards,
+  jokerSettingsOrRanks = [],
+  assumedWildCards = 0,
+  rankingMode = 'classic',
+) {
+  const jokerSettings = normalizeJokerSettings(jokerSettingsOrRanks);
+  if (jokerSettings.specialHandMode === 'kiss_miss') {
+    return evaluateKissMissHand(cards, rankingMode);
+  }
+
+  let best = null;
+
+  for (const candidate of buildCandidates(cards, jokerSettings, assumedWildCards)) {
+    const score = evaluateConcreteHand(candidate.cards, candidate.jokerCountUsed);
+    if (!best || compareScores(score, best) > 0) {
+      best = {
+        ...score,
+        assumedCards: candidate.assumedCards,
+        resolvedCards: candidate.cards,
+      };
+    }
+  }
+
+  return best;
+}
+
 export function evaluateBestTeenPattiHand(
   cards,
-  jokerRanks = [],
+  jokerSettingsOrRanks = [],
   keepCount = 3,
   assumedWildCards = 0,
   rankingMode = 'classic',
@@ -259,8 +409,21 @@ export function evaluateBestTeenPattiHand(
     return null;
   }
 
+  const jokerSettings = normalizeJokerSettings(jokerSettingsOrRanks);
+  if (jokerSettings.specialHandMode === 'kiss_miss') {
+    const score = evaluateTeenPattiHand(cards, jokerSettings, 0, rankingMode);
+    return {
+      ...score,
+      cards,
+      discardedCards: [],
+      assumedWildCards: 0,
+      assumedCards: [],
+      resolvedCards: cards,
+    };
+  }
+
   if (cards.length <= keepCount) {
-    const score = evaluateTeenPattiHand(cards, jokerRanks, assumedWildCards);
+    const score = evaluateTeenPattiHand(cards, jokerSettings, assumedWildCards, rankingMode);
     return {
       ...score,
       cards,
@@ -274,7 +437,7 @@ export function evaluateBestTeenPattiHand(
   let best = null;
 
   for (const candidateCards of combinations(cards, keepCount)) {
-    const score = evaluateTeenPattiHand(candidateCards, jokerRanks, assumedWildCards);
+    const score = evaluateTeenPattiHand(candidateCards, jokerSettings, assumedWildCards, rankingMode);
     if (!best || compareScoresForMode(score, best, rankingMode) > 0) {
       const keptIds = new Set(candidateCards.map((card) => card.id));
       best = {
@@ -294,15 +457,20 @@ export function evaluateBestTeenPattiHand(
 export function compareTeenPattiHands(
   leftCards,
   rightCards,
-  jokerRanks = [],
+  jokerSettingsOrRanks = [],
   assumedWildCards = 0,
   rankingMode = 'classic',
 ) {
-  const leftScore = evaluateTeenPattiHand(leftCards, jokerRanks, assumedWildCards);
-  const rightScore = evaluateTeenPattiHand(rightCards, jokerRanks, assumedWildCards);
+  const jokerSettings = normalizeJokerSettings(jokerSettingsOrRanks);
+  const leftScore = evaluateTeenPattiHand(leftCards, jokerSettings, assumedWildCards, rankingMode);
+  const rightScore = evaluateTeenPattiHand(rightCards, jokerSettings, assumedWildCards, rankingMode);
+  const winner = jokerSettings.specialHandMode === 'kiss_miss'
+    ? compareKissMissScores(leftScore, rightScore, rankingMode)
+    : compareScoresForMode(leftScore, rightScore, rankingMode);
+
   return {
     leftScore,
     rightScore,
-    winner: compareScoresForMode(leftScore, rightScore, rankingMode),
+    winner,
   };
 }
