@@ -212,6 +212,16 @@ function getNextActivePlayer(room, currentPlayerId) {
   return ordered[(currentIndex + 1) % ordered.length];
 }
 
+function getNextSeatedPlayer(players, currentSeat) {
+  if (!players.length) {
+    return null;
+  }
+
+  const ordered = [...players].sort((left, right) => left.seat - right.seat);
+  const nextBySeat = ordered.find((player) => player.seat > currentSeat);
+  return nextBySeat || ordered[0];
+}
+
 function getPreviousSeenPlayer(room, currentPlayerId) {
   const ordered = getActiveSeatPlayers(room);
   const startIndex = ordered.findIndex((player) => player.id === currentPlayerId);
@@ -505,13 +515,27 @@ export function startRound(room, playerId) {
     return { error: 'Only the host can start the game.' };
   }
 
+  const hadPreviousRound = Boolean(room.round);
+  const previousDealerSeat =
+    room.players.find((player) => player.id === room.round?.dealerPlayerId)?.seat ??
+    room.players.find((player) => player.id === room.hostPlayerId)?.seat ??
+    -1;
+
   clearRoundState(room);
   ensureController(room);
+  assignSeats(room);
 
-  const eligiblePlayers = room.players.filter((player) => player.chips >= room.config.bootAmount);
+  const eligiblePlayers = room.players
+    .filter((player) => player.chips >= room.config.bootAmount)
+    .sort((left, right) => left.seat - right.seat);
   if (eligiblePlayers.length < room.config.minPlayers) {
     return { error: 'At least 2 players with enough chips for boot are required.' };
   }
+
+  const firstDealer = eligiblePlayers.find((player) => player.id === room.hostPlayerId) || eligiblePlayers[0];
+  const dealer = hadPreviousRound
+    ? getNextSeatedPlayer(eligiblePlayers, previousDealerSeat) || eligiblePlayers[0]
+    : firstDealer;
 
   const cardsNeeded = eligiblePlayers.length * room.config.cardsDealt;
   const deckCount = Math.max(1, Math.ceil(cardsNeeded / 52));
@@ -524,7 +548,7 @@ export function startRound(room, playerId) {
     number: (room.round?.number || 0) + 1,
     pot: 0,
     currentStake: room.config.bootAmount,
-    dealerPlayerId: room.hostPlayerId,
+    dealerPlayerId: dealer.id,
     actionPlayerId: '',
     winnerId: '',
     showAllCards: false,
@@ -532,7 +556,6 @@ export function startRound(room, playerId) {
     activeJokerSuits: resolvedJokers.activeJokerSuits,
   };
 
-  assignSeats(room);
   room.phase = 'betting';
   room.prompt = null;
   room.sideShowReveal = null;
@@ -552,7 +575,7 @@ export function startRound(room, playerId) {
     player.pendingDiscardCount = room.config.cardsDealt - room.config.cardsToKeep;
   }
 
-  const opener = getNextActivePlayer(room, room.round.dealerPlayerId) || eligiblePlayers[0];
+  const opener = getNextSeatedPlayer(eligiblePlayers, dealer.seat) || eligiblePlayers[0];
   room.round.actionPlayerId = opener.id;
 
   pushHistory(
