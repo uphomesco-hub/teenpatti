@@ -1987,18 +1987,23 @@ body.viewport-locked {
 }
 
 .table-stage-status span:last-child {
+  background: linear-gradient(180deg, rgba(233, 195, 73, 0.24), rgba(233, 195, 73, 0.12));
+  border-color: rgba(233, 195, 73, 0.3);
   color: rgba(245, 239, 220, 0.95);
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.08em;
+  box-shadow:
+    0 0 0 1px rgba(233, 195, 73, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.24);
 }
 
 .table-stage-status-live span:last-child {
-  background: linear-gradient(180deg, rgba(233, 195, 73, 0.24), rgba(233, 195, 73, 0.12));
-  border-color: rgba(233, 195, 73, 0.34);
+  background: linear-gradient(180deg, rgba(233, 195, 73, 0.3), rgba(233, 195, 73, 0.16));
+  border-color: rgba(233, 195, 73, 0.4);
   color: var(--lounge-gold);
   box-shadow:
-    0 0 0 1px rgba(233, 195, 73, 0.18),
+    0 0 0 1px rgba(233, 195, 73, 0.22),
     0 0 18px rgba(233, 195, 73, 0.22);
   animation: seatPulse 1.8s ease-in-out infinite;
 }
@@ -3230,9 +3235,12 @@ body.viewport-locked {
 
   .table-stage-status {
     top: 10px;
+    left: auto;
+    right: 10px;
+    transform: none;
     grid-template-columns: 72px 132px;
     width: auto;
-    max-width: calc(100% - 116px);
+    max-width: calc(100% - 132px);
   }
 
   .table-stage-status span {
