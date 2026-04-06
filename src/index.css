@@ -2943,3 +2943,501 @@ body.viewport-locked {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  html.viewport-locked,
+  body.viewport-locked {
+    overflow: auto;
+  }
+
+  .entry-topbar {
+    height: auto;
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .entry-brand {
+    font-size: 1.6rem;
+  }
+
+  .entry-main {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .entry-hero {
+    gap: 14px;
+  }
+
+  .entry-hero h1 {
+    max-width: none;
+    font-size: clamp(2.2rem, 10vw, 3.6rem);
+  }
+
+  .entry-hero p {
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .entry-hero-notes {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .entry-note-card,
+  .entry-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .entry-card-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .lounge-shell-lobby,
+  .lounge-shell-game {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .lounge-topbar {
+    height: auto;
+    padding: 10px 12px;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .lounge-brand {
+    font-size: 1.35rem;
+  }
+
+  .lounge-top-actions {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chip-badge,
+  .recharge-btn {
+    min-height: 38px;
+  }
+
+  .lobby-main {
+    padding: 12px;
+    gap: 12px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .lobby-heading h1 {
+    font-size: 1.45rem;
+  }
+
+  .lobby-heading p,
+  .lobby-info-strip,
+  .guest-meta,
+  .lobby-note,
+  .rules-summary-line {
+    font-size: 0.78rem;
+  }
+
+  .lobby-config-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .lobby-form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .guest-list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .guest-row {
+    padding: 8px 10px;
+    gap: 10px;
+  }
+
+  .guest-stack-editor {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .invite-code {
+    font-size: 1.15rem;
+    letter-spacing: 0.16em;
+  }
+
+  .game-main {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    overflow: visible;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .game-table-shell,
+  .game-table-shell-crowded {
+    min-height: 760px;
+    --table-width: min(94vw, 430px);
+    --table-height: 560px;
+    --seat-width: 72px;
+    --seat-avatar-size: 42px;
+    --seat-card-width: 11px;
+    --seat-card-height: 16px;
+    --seat-font-size: 0.5rem;
+    --hero-card-width: 64px;
+    --hero-card-height: 96px;
+  }
+
+  .game-table-glow {
+    display: none;
+  }
+
+  .game-table-oval {
+    top: 46%;
+    border-width: 14px;
+    border-radius: 30px;
+  }
+
+  .game-side-dock {
+    top: 10px;
+    left: 10px;
+    gap: 8px;
+  }
+
+  .dock-toggle {
+    min-width: 56px;
+    padding: 8px 10px;
+    font-size: 0.62rem;
+  }
+
+  .game-flyout {
+    top: 52px;
+    left: 10px;
+    width: min(240px, calc(100vw - 20px));
+  }
+
+  .table-stage-status {
+    top: 10px;
+    width: calc(100% - 120px);
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .table-stage-status span {
+    padding: 8px 10px;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+  }
+
+  .table-stage-status span:last-child {
+    font-size: 0.66rem;
+  }
+
+  .pot-core {
+    top: 20%;
+    width: 170px;
+    min-height: 108px;
+    padding: 12px 10px;
+    border-radius: 18px;
+  }
+
+  .pot-core strong {
+    font-size: 2rem;
+  }
+
+  .pot-core span,
+  .pot-badge,
+  .pot-mode,
+  .pot-jokers {
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+  }
+
+  .pot-mode,
+  .pot-jokers {
+    max-width: 150px;
+  }
+
+  .pot-markers i {
+    width: 10px;
+    height: 10px;
+  }
+
+  .table-event-banner {
+    top: 40%;
+    max-width: calc(100% - 32px);
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    line-height: 1.3;
+  }
+
+  .table-seat {
+    gap: 4px;
+  }
+
+  .table-seat-avatar-badge {
+    width: 18px;
+    height: 18px;
+    right: -4px;
+    bottom: -4px;
+    font-size: 0.74rem;
+  }
+
+  .table-seat-name,
+  .table-seat-meta,
+  .table-seat-token,
+  .table-seat-last-bet,
+  .table-seat-state,
+  .table-seat-turn-indicator {
+    letter-spacing: 0.04em;
+  }
+
+  .table-seat-meta-row {
+    gap: 4px;
+    flex-direction: column;
+  }
+
+  .table-seat-token,
+  .table-seat-state,
+  .table-seat-last-bet,
+  .table-seat-turn-indicator {
+    padding: 3px 6px;
+    font-size: 0.5rem;
+  }
+
+  .hero-seat {
+    width: calc(100% - 16px);
+    bottom: 8px;
+    gap: 8px;
+  }
+
+  .hand-cards {
+    min-height: 86px;
+    gap: 8px;
+  }
+
+  .hero-card-corner {
+    top: 6px;
+    left: 6px;
+    font-size: 0.66rem;
+  }
+
+  .hero-card-rank {
+    font-size: 1.6rem;
+  }
+
+  .hero-card-chip {
+    left: 6px;
+    bottom: 6px;
+    font-size: 0.46rem;
+    padding: 3px 5px;
+  }
+
+  .hero-seat-panel {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .hero-seat-panel-top {
+    grid-template-columns: 1fr auto auto;
+    justify-items: stretch;
+    text-align: left;
+    gap: 8px;
+  }
+
+  .hero-seat-name {
+    font-size: 0.96rem;
+  }
+
+  .hero-seat-stack {
+    font-size: 1rem;
+  }
+
+  .hand-status-chip {
+    padding: 6px 8px;
+    font-size: 0.54rem;
+  }
+
+  .hand-insight-title {
+    font-size: 0.92rem;
+  }
+
+  .hand-insight-copy,
+  .discard-prompt {
+    font-size: 0.72rem;
+  }
+
+  .winner-toast,
+  .prompt-panel {
+    left: 50%;
+    right: auto;
+    top: 76px;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 420px;
+    padding: 12px;
+  }
+
+  .winner-showcase,
+  .side-show-reveal {
+    top: 53%;
+    width: calc(100% - 16px);
+    max-height: 72vh;
+    overflow: auto;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .winner-showcase-title,
+  .side-show-reveal-title {
+    font-size: 1.2rem;
+  }
+
+  .winner-showcase-copy,
+  .side-show-reveal-copy {
+    font-size: 0.82rem;
+  }
+
+  .winner-card {
+    width: 62px;
+    height: 92px;
+  }
+
+  .winner-card-corner {
+    top: 7px;
+    left: 7px;
+    font-size: 0.6rem;
+  }
+
+  .winner-card-rank {
+    font-size: 1.3rem;
+  }
+
+  .next-round-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-controls {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .control-buttons {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+    padding-bottom: 0;
+  }
+
+  .control-btn {
+    min-width: 88px;
+    padding: 8px 10px;
+    font-size: 0.66rem;
+  }
+
+  .raise-control-inline {
+    gap: 8px;
+  }
+
+  .raise-input {
+    width: 82px;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 0.88rem;
+  }
+
+  .turn-wait {
+    font-size: 0.74rem;
+    text-align: left;
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .entry-main,
+  .lobby-main {
+    padding: 12px;
+  }
+
+  .entry-feature-pill {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .lounge-topbar {
+    padding: 10px;
+  }
+
+  .lounge-brand {
+    font-size: 1.2rem;
+  }
+
+  .chip-badge,
+  .recharge-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .game-table-shell,
+  .game-table-shell-crowded {
+    min-height: 700px;
+    --table-width: calc(100vw - 12px);
+    --table-height: 500px;
+    --seat-width: 64px;
+    --seat-avatar-size: 38px;
+    --seat-card-width: 9px;
+    --seat-card-height: 14px;
+  }
+
+  .game-table-oval {
+    border-width: 10px;
+  }
+
+  .table-stage-status {
+    width: calc(100% - 104px);
+  }
+
+  .table-stage-status span:first-child {
+    display: none;
+  }
+
+  .pot-core {
+    top: 19%;
+    width: 156px;
+  }
+
+  .table-event-banner {
+    top: 39%;
+    max-width: calc(100% - 20px);
+  }
+
+  .hero-seat-panel-top {
+    grid-template-columns: 1fr auto;
+  }
+
+  .hand-status-chip {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .winner-showcase,
+  .side-show-reveal {
+    top: 54%;
+    max-height: 68vh;
+  }
+}
