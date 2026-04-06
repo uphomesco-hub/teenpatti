@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#d4dbff",
+                        "on-secondary-fixed": "#001550",
+                        "surface-dim": "#131313",
+                        "surface-variant": "#353534",
+                        "tertiary-fixed-dim": "#ffb4a8",
+                        "secondary": "#b6c4ff",
+                        "secondary-fixed-dim": "#b6c4ff",
+                        "surface-container": "#201f1f",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#bfc9c4",
+                        "inverse-on-surface": "#313030",
+                        "on-primary": "#3c2f00",
+                        "tertiary-container": "#8d0000",
+                        "on-background": "#e5e2e1",
+                        "surface": "#131313",
+                        "background": "#131313",
+                        "primary-fixed": "#ffe088",
+                        "surface-container-high": "#2a2a2a",
+                        "outline": "#89938f",
+                        "on-secondary": "#002780",
+                        "on-error": "#690005",
+                        "outline-variant": "#3f4945",
+                        "primary-fixed-dim": "#e9c349",
+                        "secondary-container": "#0050ee",
+                        "primary": "#e9c349",
+                        "on-secondary-fixed-variant": "#003ab3",
+                        "tertiary-fixed": "#ffdad4",
+                        "surface-tint": "#e9c349",
+                        "on-tertiary-container": "#ff9282",
+                        "tertiary": "#ffb4a8",
+                        "surface-container-highest": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-container": "#d1ad35",
+                        "secondary-fixed": "#dce1ff",
+                        "inverse-primary": "#735c00",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary": "#690000",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#241a00",
+                        "on-tertiary-fixed": "#410000",
+                        "inverse-surface": "#e5e2e1",
+                        "primary-container": "#534100",
+                        "surface-bright": "#393939",
+                        "on-tertiary-fixed-variant": "#930000"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+        .font-serif { font-family: 'Noto Serif', serif; }
+        .glass { backdrop-filter: blur(12px); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen overflow-hidden selection:bg-primary selection:text-on-primary">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-3 bg-neutral-950/80 backdrop-blur-xl shadow-2xl">
+<div class="flex items-center gap-6">
+<span class="font-serif italic text-2xl text-teal-500">The Grandmaster's Lounge</span>
+<nav class="hidden md:flex gap-6 font-serif text-on-surface">
+<a class="text-neutral-400 hover:bg-neutral-800 transition-colors px-3 py-1" href="#">Table Rules</a>
+<a class="text-neutral-400 hover:bg-neutral-800 transition-colors px-3 py-1" href="#">Hand Strength</a>
+<a class="text-teal-400 border-b-2 border-teal-500 px-3 py-1" href="#">Lobby</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<button class="p-2 hover:bg-neutral-800 transition-colors"><span class="material-symbols-outlined text-on-surface">history</span></button>
+<button class="p-2 hover:bg-neutral-800 transition-colors"><span class="material-symbols-outlined text-on-surface">settings</span></button>
+<button class="p-2 hover:bg-neutral-800 transition-colors"><span class="material-symbols-outlined text-on-surface">help</span></button>
+</div>
+<button class="bg-teal-500/10 text-teal-400 px-4 py-2 font-serif text-sm border border-teal-500/20 active:scale-95 duration-200">Recharge Chips</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Player Profile" data-alt="Close-up portrait of a sophisticated man in a dark suit with dramatic low-key lighting in a luxury setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsmHqaHQsMshLyRGn4kar8i6EoBz9p-Hl2VTGjTmEsSWSGhEY7z_LQXWIydTQl6wnvYESLZ1VsDqUNG6jY6WOo5NPHN20YXWEgDp6PGyFC-zqT-Mf-RQYcKAEXbJEj-L2MZhn37p1DXI99RtgkKRxLGws9CnYfLjHUON47D1d8k-5VpxNsgPheP3PKZiyU7l2YAO_onWEuHjF1mqSHJl7p5nRQR6L5oOZyxRaeEMyP2kysZMkk1LiFXV6Kclf0JaLBqXA96k1EEaI"/>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 bg-gradient-to-b from-neutral-800 to-transparent h-1 w-full"></div>
+</header>
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col pt-16 bg-neutral-900/60 backdrop-blur-lg shadow-inner w-64">
+<div class="p-6 flex items-center gap-3">
+<div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary">
+<img alt="Table Host" data-alt="Distinguished gentleman with gray hair wearing a formal tuxedo, cinematic warm studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtESjPoHB1eKYo2Dtpp3fmB5o3MTqctObGrYx-MNh2Meupf4CoU_y2C6OHzYnxuGx_EK6P3sNvLjkIQ6E5slM6iuU-NZLdtjBKDLsA4WcfzVmEI0lvkbV0bk599V2OUqN-f4bNGiy_GqHvDr_jZyPKZAZAqRp6BchuSDOkxa0bvh0EAtxeQZx8QVdvgiPnTHPJKxJP_jpyB_0K-ebJ6uT6N6ElebOiEle1XBVWg89PHHd0aD70URr4lL_p31Qw2ZRG1gr-2Y_Jdzw"/>
+</div>
+<div>
+<p class="font-sans uppercase tracking-widest text-xs text-teal-400">Table #702</p>
+<p class="text-[10px] text-neutral-500 uppercase tracking-tighter">High-Stakes Private</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col px-2 py-4 gap-1">
+<button class="flex items-center gap-4 px-4 py-3 text-neutral-500 font-sans uppercase tracking-widest text-xs hover:bg-neutral-800/50 transition-all ease-in-out duration-300">
+<span class="material-symbols-outlined">chat</span> Live Chat
+            </button>
+<button class="flex items-center gap-4 px-4 py-3 text-neutral-500 font-sans uppercase tracking-widest text-xs hover:bg-neutral-800/50 transition-all ease-in-out duration-300">
+<span class="material-symbols-outlined">list_alt</span> Activity Log
+            </button>
+<button class="flex items-center gap-4 px-4 py-3 text-neutral-500 font-sans uppercase tracking-widest text-xs hover:bg-neutral-800/50 transition-all ease-in-out duration-300">
+<span class="material-symbols-outlined">trophy</span> Leaderboard
+            </button>
+<button class="flex items-center gap-4 px-4 py-3 bg-teal-500/10 text-teal-400 border-r-4 border-teal-500 font-sans uppercase tracking-widest text-xs transition-all ease-in-out duration-300">
+<span class="material-symbols-outlined">military_tech</span> Variation: AK47
+            </button>
+</nav>
+<div class="p-4 flex flex-col gap-4 bg-neutral-800/40">
+<button class="w-full bg-primary text-on-primary py-2 font-bold text-xs uppercase tracking-widest active:scale-95 transition-transform">Invite Friends</button>
+<div class="flex flex-col gap-1">
+<button class="flex items-center gap-3 px-4 py-2 text-neutral-500 text-[10px] uppercase hover:text-on-surface">
+<span class="material-symbols-outlined text-sm">support_agent</span> Support
+                </button>
+<button class="flex items-center gap-3 px-4 py-2 text-neutral-500 text-[10px] uppercase hover:text-on-surface">
+<span class="material-symbols-outlined text-sm">logout</span> Exit
+                </button>
+</div>
+</div>
+</aside>
+<!-- Main Game Canvas (Background) -->
+<main class="ml-64 pt-16 h-screen relative bg-surface-dim overflow-hidden">
+<!-- The Table -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-[80%] h-[60%] rounded-[100%] bg-gradient-to-b from-teal-900/40 to-surface-container-lowest border border-teal-950/50 relative shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+<!-- Center Pot Display -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+<p class="font-serif text-outline-variant text-xs uppercase tracking-widest mb-1">Total Pot</p>
+<p class="font-serif text-4xl text-primary font-bold tracking-tight">₹ 14,50,000</p>
+</div>
+<!-- Ghosted Player Pods (Game Table context) -->
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 opacity-20">
+<div class="bg-surface-container-high p-3 rounded-md w-32 flex flex-col items-center">
+<div class="w-12 h-12 rounded-full bg-neutral-700 mb-2 border border-outline-variant"></div>
+<div class="h-2 w-16 bg-neutral-800 rounded"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- WINNER VARIATION OVERLAY -->
+<div class="absolute inset-0 z-50 flex items-center justify-center px-4">
+<!-- Background Backdrop with Celebration Glow -->
+<div class="absolute inset-0 bg-surface-lowest/70 backdrop-blur-md">
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(233,195,73,0.15)_0%,transparent_70%)]"></div>
+</div>
+<!-- The Variation Picker Modal -->
+<div class="relative w-full max-w-2xl bg-surface-container-high glass shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
+<!-- Top Accent Line -->
+<div class="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+<div class="p-8">
+<!-- Winner Announcement -->
+<div class="text-center mb-10">
+<span class="font-serif text-primary text-xs uppercase tracking-[0.4em] block mb-2">Round Winner</span>
+<h2 class="font-serif text-4xl text-on-surface font-bold">Vikram Sethi</h2>
+<div class="flex items-center justify-center gap-2 mt-2">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="text-on-surface-variant font-label text-[10px] uppercase tracking-widest">Variation Master Privilege</span>
+</div>
+</div>
+<div class="space-y-8">
+<!-- Section: Variation Selection -->
+<section>
+<h3 class="font-serif text-sm text-outline mb-4 flex items-center gap-2">
+<span class="w-8 h-[1px] bg-outline-variant"></span>
+                                Select Variation
+                                <span class="w-8 h-[1px] bg-outline-variant"></span>
+</h3>
+<div class="grid grid-cols-3 gap-4">
+<!-- Option 1: AK47 -->
+<button class="group relative flex flex-col items-center p-4 bg-surface-container-lowest border-b-2 border-primary transition-all duration-300">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl">military_tech</span>
+<span class="font-sans font-bold text-xs uppercase tracking-widest text-on-surface">AK47</span>
+<span class="text-[9px] text-on-surface-variant mt-1 text-center opacity-60">A, K, 4, 7 are Jokers</span>
+</button>
+<!-- Option 2: Muflis -->
+<button class="group relative flex flex-col items-center p-4 bg-surface-container-low hover:bg-surface-bright transition-all duration-300">
+<span class="material-symbols-outlined text-outline mb-3 text-3xl">trending_down</span>
+<span class="font-sans font-bold text-xs uppercase tracking-widest text-neutral-400">Muflis</span>
+<span class="text-[9px] text-on-surface-variant mt-1 text-center opacity-40">Lowest hand wins</span>
+</button>
+<!-- Option 3: Lallan Kalla -->
+<button class="group relative flex flex-col items-center p-4 bg-surface-container-low hover:bg-surface-bright transition-all duration-300">
+<span class="material-symbols-outlined text-outline mb-3 text-3xl">style</span>
+<span class="font-sans font-bold text-xs uppercase tracking-widest text-neutral-400">Lallan Kalla</span>
+<span class="text-[9px] text-on-surface-variant mt-1 text-center opacity-40">Middle card is Joker</span>
+</button>
+</div>
+</section>
+<!-- Section: Detailed Rules -->
+<div class="grid grid-cols-2 gap-8">
+<!-- Cards Dealt -->
+<section>
+<h3 class="font-serif text-[10px] text-outline-variant uppercase tracking-widest mb-4">Cards Dealt</h3>
+<div class="flex gap-2">
+<button class="flex-1 py-2 font-bold text-sm bg-primary/10 text-primary border border-primary/20">3 Cards</button>
+<button class="flex-1 py-2 font-bold text-sm bg-surface-container-lowest text-neutral-500 hover:text-on-surface transition-colors">4 Cards</button>
+</div>
+</section>
+<!-- Discard Count -->
+<section>
+<h3 class="font-serif text-[10px] text-outline-variant uppercase tracking-widest mb-4">Discard Count</h3>
+<div class="flex gap-2">
+<button class="flex-1 py-2 font-bold text-sm bg-primary text-on-primary shadow-lg shadow-primary/20">0 Count</button>
+<button class="flex-1 py-2 font-bold text-sm bg-surface-container-lowest text-neutral-500 hover:text-on-surface transition-colors">1 Count</button>
+</div>
+</section>
+</div>
+<!-- Action Button -->
+<div class="pt-4">
+<button class="w-full bg-gradient-to-r from-secondary to-secondary-container text-on-secondary py-4 rounded-md font-bold uppercase tracking-[0.2em] text-sm shadow-2xl hover:brightness-110 active:scale-95 transition-all">
+                                Confirm Variation
+                            </button>
+<p class="text-center text-[10px] text-outline-variant mt-4 font-label uppercase tracking-tighter">
+                                All players will be notified of the new rules instantly
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Controls (Shell Layout) -->
+<footer class="fixed bottom-0 w-full z-50 flex justify-center items-center gap-4 px-10 py-6 bg-neutral-950/90 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+<div class="absolute top-0 left-0 bg-teal-900/20 h-px w-full"></div>
+<button class="flex items-center gap-2 bg-neutral-800 text-neutral-300 rounded-md px-6 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-teal-400">visibility_off</span> Blind
+        </button>
+<button class="flex items-center gap-2 bg-neutral-800 text-neutral-300 rounded-md px-6 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-teal-400">payments</span> Chaal
+        </button>
+<button class="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-700 text-white rounded-md shadow-lg px-8 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">compare_arrows</span> Side Show
+        </button>
+<button class="flex items-center gap-2 bg-neutral-800 text-neutral-300 rounded-md px-6 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-teal-400">close</span> Fold
+        </button>
+</footer>
+</body></html>

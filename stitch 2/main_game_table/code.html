@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Grandmaster's Lounge - Teen Patti</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#d4dbff",
+                        "on-secondary-fixed": "#001550",
+                        "surface-dim": "#131313",
+                        "surface-variant": "#353534",
+                        "tertiary-fixed-dim": "#ffb4a8",
+                        "secondary": "#b6c4ff",
+                        "secondary-fixed-dim": "#b6c4ff",
+                        "surface-container": "#201f1f",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#bfc9c4",
+                        "inverse-on-surface": "#313030",
+                        "on-primary": "#3c2f00",
+                        "tertiary-container": "#8d0000",
+                        "on-background": "#e5e2e1",
+                        "surface": "#131313",
+                        "background": "#131313",
+                        "primary-fixed": "#ffe088",
+                        "surface-container-high": "#2a2a2a",
+                        "outline": "#89938f",
+                        "on-secondary": "#002780",
+                        "on-error": "#690005",
+                        "outline-variant": "#3f4945",
+                        "primary-fixed-dim": "#e9c349",
+                        "secondary-container": "#0050ee",
+                        "primary": "#e9c349",
+                        "on-secondary-fixed-variant": "#003ab3",
+                        "tertiary-fixed": "#ffdad4",
+                        "surface-tint": "#e9c349",
+                        "on-tertiary-container": "#ff9282",
+                        "tertiary": "#ffb4a8",
+                        "surface-container-highest": "#353534",
+                        "on-error-container": "#ffdad6",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-container": "#d1ad35",
+                        "secondary-fixed": "#dce1ff",
+                        "inverse-primary": "#735c00",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary": "#690000",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#241a00",
+                        "on-tertiary-fixed": "#410000",
+                        "inverse-surface": "#e5e2e1",
+                        "primary-container": "#534100",
+                        "surface-bright": "#393939",
+                        "on-tertiary-fixed-variant": "#930000"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .serif-headline { font-family: 'Noto Serif', serif; }
+        .table-gradient {
+            background: radial-gradient(circle at center, #064e3b 0%, #022c22 70%, #0e0e0e 100%);
+        }
+        .glass-panel {
+            background: rgba(53, 53, 52, 0.6);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-3 bg-neutral-950/80 backdrop-blur-xl shadow-2xl">
+<div class="flex items-center gap-8">
+<span class="font-serif italic text-2xl text-teal-500">The Grandmaster's Lounge</span>
+<div class="hidden md:flex gap-6 font-serif text-on-surface">
+<a class="text-neutral-400 hover:bg-neutral-800 transition-colors px-3 py-1 rounded" href="#">Table Rules</a>
+<a class="text-neutral-400 hover:bg-neutral-800 transition-colors px-3 py-1 rounded" href="#">Hand Strength</a>
+<a class="text-teal-400 border-b-2 border-teal-500 px-3 py-1" href="#">Lobby</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-4 mr-4">
+<span class="material-symbols-outlined text-neutral-400 cursor-pointer hover:bg-neutral-800 transition-colors p-2 rounded" data-icon="history">history</span>
+<span class="material-symbols-outlined text-neutral-400 cursor-pointer hover:bg-neutral-800 transition-colors p-2 rounded" data-icon="settings">settings</span>
+<span class="material-symbols-outlined text-neutral-400 cursor-pointer hover:bg-neutral-800 transition-colors p-2 rounded" data-icon="help">help</span>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 font-bold scale-95 duration-200 active:scale-90 rounded">Recharge Chips</button>
+<img alt="Player Profile" class="w-10 h-10 rounded-full border-2 border-primary shadow-lg" data-alt="Close-up portrait of a sophisticated man in a dark suit with dramatic lighting against a moody background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2zCGQSBBFuO6jbY7H-bdeWQ0T9UUtwqP_3qCpsDoPdGMajuSCNk0PRzpML1z4V6jNzPrdDj7BowEPcqlwhX-DswSCq-yHDiUcngFM043mlxV6T1sWNHmTevUQW-mTBkEkal4NCo-3DUz5-MeqMq0uGNKcFPpYoEt_YMY-xVRUAL5jZshJJ7BLvAlViTD2zd0s6sj7gVWRX91o8Hp5c9emmq2tjQO3fgOsqQQCNWFXEkKf8oK20eJSM5_PpYU4a_Jxn0mYXsH_0ik"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full z-40 flex flex-col pt-16 bg-neutral-900/60 backdrop-blur-lg shadow-inner w-64 hidden md:flex">
+<div class="px-6 py-6 flex items-center gap-3">
+<img alt="Table Host" class="w-12 h-12 rounded-lg object-cover" data-alt="Professional table host in a sharp tuxedo with warm lighting and a blurry casino background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLhbYdxQIlbb361RDjDpgR2gJdVLXf8izDGE1QpZB2FY7r_xWKtZBVUf790tg7WUbNe-GK5B5WMv1auwamR-8qIuVpd20C8hXVtpcrLRbRjMxadUS7VDKlYJU8WKeOBSIlVN4T0CrU72NgLcSIcXkTVeU4HhYwc2znD0pVIJsW9jYObTEwlzhYSMGfuRrjjnuhfg9Jw0XWkwmkMS8pBrmPWZa_dvJC4i2mBxU6UGinpmEIf5Kv04cgSWEOPqE8E9N2ulZsvdHMNwY"/>
+<div>
+<h3 class="font-sans uppercase tracking-widest text-xs text-teal-400 font-bold">Table #702</h3>
+<p class="text-[10px] text-neutral-500 uppercase tracking-wider">High-Stakes Private</p>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<div class="flex items-center gap-4 px-4 py-3 bg-teal-500/10 text-teal-400 border-r-4 border-teal-500 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-sans uppercase tracking-widest text-xs">Live Chat</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-neutral-500 hover:bg-neutral-800/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+<span class="font-sans uppercase tracking-widest text-xs">Activity Log</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-neutral-500 hover:bg-neutral-800/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="trophy">trophy</span>
+<span class="font-sans uppercase tracking-widest text-xs">Leaderboard</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-neutral-500 hover:bg-neutral-800/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="military_tech">military_tech</span>
+<span class="font-sans uppercase tracking-widest text-xs">Variation: AK47</span>
+</div>
+</nav>
+<div class="p-4">
+<button class="w-full bg-neutral-800 text-teal-400 border border-teal-500/30 py-3 font-sans uppercase tracking-widest text-xs hover:bg-neutral-700 transition-colors">Invite Friends</button>
+</div>
+<div class="px-3 pb-6 space-y-1">
+<div class="flex items-center gap-4 px-4 py-3 text-neutral-500 hover:bg-neutral-800/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span class="font-sans uppercase tracking-widest text-xs">Support</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-neutral-500 hover:bg-neutral-800/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-sans uppercase tracking-widest text-xs">Exit</span>
+</div>
+</div>
+</aside>
+<!-- Main Table Canvas -->
+<main class="min-h-screen pt-16 pb-28 md:pl-64 flex flex-col items-center justify-center relative overflow-hidden bg-surface-dim">
+<!-- Table Visual -->
+<div class="absolute inset-0 table-gradient opacity-80 pointer-events-none"></div>
+<div class="absolute w-[120%] h-[80%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[100%] border-[24px] border-surface-container-low/40 shadow-[0_0_100px_rgba(0,0,0,0.8)] pointer-events-none"></div>
+<!-- Gameplay Area -->
+<div class="relative w-full max-w-6xl aspect-[16/9] flex flex-col items-center justify-center">
+<!-- Central Pot Area -->
+<div class="z-10 flex flex-col items-center justify-center p-8 text-center bg-surface-container-lowest/40 backdrop-blur-md rounded-full w-64 h-64 border border-outline-variant/10 shadow-2xl">
+<span class="font-sans text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Current Pot</span>
+<h1 class="serif-headline text-5xl text-primary font-bold">12.5M</h1>
+<div class="flex gap-1 mt-4">
+<div class="w-4 h-4 bg-primary rounded-full shadow-lg"></div>
+<div class="w-4 h-4 bg-primary-fixed-dim rounded-full shadow-lg"></div>
+<div class="w-4 h-4 bg-primary-container rounded-full shadow-lg"></div>
+</div>
+<!-- Variation Badge -->
+<div class="mt-4 px-3 py-1 bg-surface-container-highest text-[10px] uppercase tracking-widest border border-primary/20 text-primary font-bold">
+                    Variation: Normal
+                </div>
+</div>
+<!-- Player Positions Around Table (6 Players) -->
+<!-- Player 1 (Top Left) -->
+<div class="absolute top-[10%] left-[15%] flex flex-col items-center gap-2">
+<div class="relative w-24 h-24 p-1 rounded-lg glass-panel border border-outline-variant/20 shadow-xl overflow-hidden opacity-40">
+<img alt="Player 1" class="w-full h-full object-cover rounded" data-alt="Headshot of a man in professional attire, desaturated and slightly transparent to indicate a folded or inactive state" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqtAhrI_5-5_yW_3w9gx9uDgVsZpqRc7WKpGHAx7_HewD42wbV_gRE6pes1rmma80aBMEMgH1WZjFMEzdhAiUAM0aIA2EL8Sf6dCVZy0KQC0KMjw1vGz6hJ_zkWunKbf21RL3PBFUTYION4PlN5HgapzYv_-z7qzltvZnNxq21Hl3G2d2Pv1xa9t0wpAlHWomkKeTvJZM4KlmcHfYQ9XaEpGpRdPz4KStJ8XCCnfkN7zsiEyHkDTVjsXLRg8VVB6OznID0kKHAjU4"/>
+</div>
+<div class="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Arjun V. <span class="text-error">Folded</span></div>
+</div>
+<!-- Player 2 (Top Center) -->
+<div class="absolute top-[5%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+<div class="relative w-24 h-24 p-1 rounded-lg glass-panel border border-primary/40 shadow-[0_0_20px_rgba(233,195,73,0.3)] overflow-hidden">
+<img alt="Player 2" class="w-full h-full object-cover rounded" data-alt="Young woman looking confidently at the camera, framed by a golden highlight border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_BUksZXnI4z00pXCSP7_ij3OWn0va7VM6GDziCKDs_FgwgDR116WVHjM8X2qKur2j6GaIYk6Yc0iotafoDc7UEhxYz6gur9XK_cMkEyCH4-ke8KVZrfsXQX3iRcLpvJ1NeXgC1uo8FLUd3caLiifcYDIxLmXjRntWe-eg-TjmhC2W3GoGH5t-q4EXITRSTZP6cWw5J4UAGcyDrcUlONfA384rqsOcNPrpmh_BQftjIeAFaDfgS_Sl7dmZxLXlCCpxX9WU3zIFsto"/>
+<div class="absolute -top-1 -right-1 bg-primary text-on-primary p-1 rounded-full text-[10px] font-bold border border-surface shadow-md">D</div>
+</div>
+<div class="text-[10px] uppercase tracking-widest font-bold text-on-surface">Priya K.</div>
+</div>
+<!-- Player 3 (Top Right) -->
+<div class="absolute top-[10%] right-[15%] flex flex-col items-center gap-2">
+<div class="relative w-24 h-24 p-1 rounded-lg glass-panel border border-outline-variant/20 shadow-xl overflow-hidden">
+<img alt="Player 3" class="w-full h-full object-cover rounded" data-alt="Close up of a mature man with grey beard, sharp focus and soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZoGTj5RJobc1713QqAu4W_cyUkLvx0ecOlnx8EGb-T62o0O3rWdDmvPoR-hpdeV1HpkzQY9ibKSPtQbvGjp7EhWU4jIfUxGQankkiFco1M7tzXTymEuUA4IaBm_GdkpyyXSASIackngkM58qPOkOc5O5vI7S-6ya6LVmVnyl9YBn5xVR29i3MsviD6Gn-B2W1S_MOY7ZW1cKlr_CXUafFq0uRCc63IF7Wjt1DQgMv6Kejuz5PouVOa-94uHBrK8rc8WARjPvAoZ4"/>
+</div>
+<div class="text-[10px] uppercase tracking-widest font-bold text-on-surface">Sanjay M.</div>
+</div>
+<!-- Player 4 (Mid Left) -->
+<div class="absolute top-1/2 left-[5%] -translate-y-1/2 flex flex-col items-center gap-2">
+<div class="relative w-24 h-24 p-1 rounded-lg glass-panel border border-outline-variant/20 shadow-xl overflow-hidden">
+<img alt="Player 4" class="w-full h-full object-cover rounded" data-alt="Woman with professional expression, high contrast lighting with deep shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfOh30R2NUE-MNmFUj-gVPwbX4RqZNRVVPgGx13Wa--8oja7e-KQqVIj16U3jNdnCLnrj5DacOt4Tyy1LPevrkE8sCQ8od95zyRYxy4Mt1jZVCHFvMrgBJOhHP_LaApYQKVVJhvOnRTnbaUqeL_66RLOegusAa_lwykbz38oo-Ngu1Sy58IqDvIv09_ds2LVhN5bS-fQkRmD0I5wjHz9HOP3VzycVXJ7rz57l_c2e2lnGuUdR_37cu_fO1AiwdwUNXDD8kQNXQ9a4"/>
+</div>
+<div class="text-[10px] uppercase tracking-widest font-bold text-on-surface">Elena S.</div>
+</div>
+<!-- Player 5 (Mid Right) -->
+<div class="absolute top-1/2 right-[5%] -translate-y-1/2 flex flex-col items-center gap-2">
+<div class="relative w-24 h-24 p-1 rounded-lg glass-panel border border-outline-variant/20 shadow-xl overflow-hidden">
+<img alt="Player 5" class="w-full h-full object-cover rounded" data-alt="Young man with stylish hair, warm evening light, blurred urban background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1Xq0ot5SyqESreT-YNIKzsjzL9uA4J0t0o5XqgB4GrqOsgo2NWgc4KrY46g7bcsgsUlTnaFcHSHlIeZ85ronwyyDjbs_4S7hhuJj7U7Pjuy5m58b3NOPI3_3hAFHw8CshpzMRKeMPUQSiUQhT93uIp1SEFXDkPw-1aqRzLuMr9_M86-xoLdv0krmiDJDF2UQHManvadly42Gk6ZcwDZ1fapKG5ibinzyHWDb0RiCI0N-Bf3gXW_Naz0th1NuTGW_We1BAJ8R-zM0"/>
+</div>
+<div class="text-[10px] uppercase tracking-widest font-bold text-on-surface">Kabir R.</div>
+</div>
+<!-- Hand Interaction Area (Bottom Center) -->
+<div class="absolute bottom-[5%] left-1/2 -translate-x-1/2 flex flex-col items-center">
+<div class="flex gap-4 mb-6">
+<!-- Cards -->
+<div class="relative group">
+<div class="w-24 h-36 bg-surface-container-highest border border-outline-variant/30 rounded-lg shadow-2xl flex items-center justify-center transform -rotate-6">
+<span class="serif-headline text-3xl text-on-surface">A</span>
+<span class="absolute top-2 left-2 text-xl">♠</span>
+</div>
+</div>
+<div class="relative group">
+<div class="w-24 h-36 bg-surface-container-highest border border-outline-variant/30 rounded-lg shadow-2xl flex items-center justify-center transform translate-y-[-10px]">
+<span class="serif-headline text-3xl text-on-surface">K</span>
+<span class="absolute top-2 left-2 text-xl">♠</span>
+</div>
+</div>
+<div class="relative group">
+<div class="w-24 h-36 bg-surface-container-highest border border-outline-variant/30 rounded-lg shadow-2xl flex items-center justify-center transform rotate-6">
+<span class="serif-headline text-3xl text-on-surface">Q</span>
+<span class="absolute top-2 left-2 text-xl">♠</span>
+</div>
+</div>
+</div>
+<!-- Status Badge -->
+<div class="px-4 py-1 bg-primary/20 border border-primary/40 rounded text-[10px] uppercase tracking-widest font-bold text-primary mb-8">
+                    Status: Seen
+                </div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Gameplay Controls) -->
+<div class="fixed bottom-0 w-full z-50 flex justify-center items-center gap-4 px-10 py-6 bg-neutral-950/90 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.5)] rounded-t-xl">
+<!-- Betting Slider (Injected into Shell area) -->
+<div class="absolute bottom-24 w-full max-w-md bg-surface-container-high/80 backdrop-blur-xl p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-3">
+<div class="flex justify-between items-center px-2">
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Bet Amount</span>
+<span class="serif-headline text-xl text-primary font-bold">500,000</span>
+</div>
+<div class="relative h-2 bg-surface-container-highest rounded-full mx-2">
+<div class="absolute left-0 h-full w-[40%] bg-primary rounded-full"></div>
+<div class="absolute left-[40%] top-1/2 -translate-y-1/2 w-6 h-6 bg-primary border-4 border-primary-fixed-dim rounded-full shadow-[0_0_15px_rgba(233,195,73,0.5)] cursor-pointer"></div>
+</div>
+<div class="flex justify-between px-1 text-[10px] font-bold text-on-surface-variant/50">
+<span>100K</span>
+<span>250K</span>
+<span>500K</span>
+<span>1M</span>
+<span>ALL IN</span>
+</div>
+</div>
+<button class="bg-neutral-800 text-neutral-300 rounded-md px-6 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="visibility_off">visibility_off</span>
+            Blind
+        </button>
+<button class="bg-gradient-to-r from-teal-600 to-blue-700 text-white rounded-md shadow-lg px-8 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+            Chaal
+        </button>
+<button class="bg-tertiary-container text-on-tertiary rounded-md px-6 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+            Fold
+        </button>
+<button class="bg-neutral-800 text-neutral-300 rounded-md px-6 py-3 font-sans font-bold text-sm hover:brightness-125 active:scale-90 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="compare_arrows">compare_arrows</span>
+            Side Show
+        </button>
+</div>
+</body></html>
