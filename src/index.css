@@ -1963,25 +1963,34 @@ body.viewport-locked {
   left: 50%;
   z-index: 5;
   transform: translateX(-50%);
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 92px 180px;
+  justify-content: center;
+  gap: 8px;
   align-items: center;
 }
 
 .table-stage-status span {
-  padding: 10px 16px;
+  display: grid;
+  align-items: center;
+  min-height: 36px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: rgba(8, 8, 8, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(12px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table-stage-status span:last-child {
   color: rgba(245, 239, 220, 0.95);
-  font-size: 0.84rem;
+  font-size: 0.76rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
 }
 
 .table-stage-status-live span:last-child {
@@ -3221,19 +3230,20 @@ body.viewport-locked {
 
   .table-stage-status {
     top: 10px;
-    width: calc(100% - 120px);
-    justify-content: center;
-    gap: 8px;
+    grid-template-columns: 72px 132px;
+    width: auto;
+    max-width: calc(100% - 116px);
   }
 
   .table-stage-status span {
-    padding: 8px 10px;
-    font-size: 0.58rem;
-    letter-spacing: 0.1em;
+    min-height: 30px;
+    padding: 6px 8px;
+    font-size: 0.54rem;
+    letter-spacing: 0.06em;
   }
 
   .table-stage-status span:last-child {
-    font-size: 0.66rem;
+    font-size: 0.58rem;
   }
 
   .pot-core {
