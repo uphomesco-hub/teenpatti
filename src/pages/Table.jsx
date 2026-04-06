@@ -101,6 +101,95 @@ const TABLE_LAYOUTS = {
   ],
 };
 
+const MOBILE_TABLE_POSITIONS = [
+  { top: '18%', left: '3%' },
+  { top: '18%', right: '3%' },
+  { top: '32%', left: '1%' },
+  { top: '32%', right: '1%' },
+  { top: '46%', left: '1%' },
+  { top: '46%', right: '1%' },
+  { bottom: '28%', left: '4%' },
+  { bottom: '28%', right: '4%' },
+  { bottom: '14%', left: '10%' },
+  { bottom: '14%', right: '10%' },
+];
+
+const MOBILE_TABLE_LAYOUTS = {
+  1: [{ top: '18%', left: '3%' }],
+  2: [
+    { top: '18%', left: '3%' },
+    { top: '18%', right: '3%' },
+  ],
+  3: [
+    { top: '18%', left: '3%' },
+    { top: '18%', right: '3%' },
+    { top: '32%', left: '1%' },
+  ],
+  4: [
+    { top: '18%', left: '3%' },
+    { top: '18%', right: '3%' },
+    { top: '32%', left: '1%' },
+    { top: '32%', right: '1%' },
+  ],
+  5: [
+    { top: '18%', left: '3%' },
+    { top: '18%', right: '3%' },
+    { top: '30%', left: '1%' },
+    { top: '30%', right: '1%' },
+    { top: '44%', left: '1%' },
+  ],
+  6: [
+    { top: '18%', left: '3%' },
+    { top: '18%', right: '3%' },
+    { top: '30%', left: '1%' },
+    { top: '30%', right: '1%' },
+    { top: '44%', left: '1%' },
+    { top: '44%', right: '1%' },
+  ],
+  7: [
+    { top: '16%', left: '3%' },
+    { top: '16%', right: '3%' },
+    { top: '27%', left: '1%' },
+    { top: '27%', right: '1%' },
+    { top: '39%', left: '1%' },
+    { top: '39%', right: '1%' },
+    { bottom: '28%', left: '4%' },
+  ],
+  8: [
+    { top: '16%', left: '3%' },
+    { top: '16%', right: '3%' },
+    { top: '27%', left: '1%' },
+    { top: '27%', right: '1%' },
+    { top: '39%', left: '1%' },
+    { top: '39%', right: '1%' },
+    { bottom: '28%', left: '4%' },
+    { bottom: '28%', right: '4%' },
+  ],
+  9: [
+    { top: '14%', left: '3%' },
+    { top: '14%', right: '3%' },
+    { top: '24%', left: '1%' },
+    { top: '24%', right: '1%' },
+    { top: '34%', left: '1%' },
+    { top: '34%', right: '1%' },
+    { bottom: '32%', left: '2%' },
+    { bottom: '32%', right: '2%' },
+    { bottom: '16%', left: '10%' },
+  ],
+  10: [
+    { top: '14%', left: '3%' },
+    { top: '14%', right: '3%' },
+    { top: '24%', left: '1%' },
+    { top: '24%', right: '1%' },
+    { top: '34%', left: '1%' },
+    { top: '34%', right: '1%' },
+    { bottom: '32%', left: '2%' },
+    { bottom: '32%', right: '2%' },
+    { bottom: '16%', left: '10%' },
+    { bottom: '16%', right: '10%' },
+  ],
+};
+
 function Table() {
   const { roomId = '' } = useParams();
   const normalizedRoomId = roomId.toUpperCase();
@@ -114,6 +203,7 @@ function Table() {
   const [selectedDiscards, setSelectedDiscards] = useState([]);
   const [configDraft, setConfigDraft] = useState(buildConfigFromPreset('classic'));
   const [chipDrafts, setChipDrafts] = useState({});
+  const [isCompactMobile, setIsCompactMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const attemptedJoinRef = useRef(false);
   const copyTimeoutRef = useRef(null);
 
@@ -305,6 +395,13 @@ function Table() {
   const currentPreset = detectPreset(roomState?.config);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleChange = (event) => setIsCompactMobile(event.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.classList.toggle('viewport-locked', !isLobby);
     document.body.classList.toggle('viewport-locked', !isLobby);
 
@@ -367,6 +464,7 @@ function Table() {
           onSaveRules={saveRules}
           onStartRound={startRound}
           isFinished={isFinished}
+          isCompactMobile={isCompactMobile}
         />
       )}
     </div>
@@ -605,6 +703,7 @@ function GameView({
   onSaveRules,
   onStartRound,
   isFinished,
+  isCompactMobile,
 }) {
   const canAct = Boolean(me?.id === activeTurnPlayer?.id);
   const actions = roomState?.you?.availableActions || {};
@@ -619,7 +718,10 @@ function GameView({
       ? 'Your Turn'
       : `${activeTurnPlayer.name}'s Turn`
     : 'Waiting for players';
-  const seatPositions = useMemo(() => getSeatPositions(otherPlayers.length), [otherPlayers.length]);
+  const seatPositions = useMemo(
+    () => getSeatPositions(otherPlayers.length, isCompactMobile),
+    [otherPlayers.length, isCompactMobile],
+  );
   const latestEvent = roomState?.history?.[roomState.history.length - 1] || null;
   const parsedEvent = useMemo(() => parseTableEvent(latestEvent, roomState.players), [latestEvent, roomState.players]);
   const sideShowReveal = roomState?.sideShowReveal || null;
@@ -711,6 +813,7 @@ function GameView({
         }
       : null,
   ].filter(Boolean);
+  const canUseFooterActions = canAct || actions.canLook || actions.canDiscard;
 
   return (
     <main className="game-main game-main-full">
@@ -898,42 +1001,54 @@ function GameView({
             {canSeeOwnCards ? (
               <div className="hand-insight">
                 <div className="hand-insight-title">{roomState?.you?.bestHandLabel || 'Best Hand'}</div>
-                <div className="hand-insight-copy">
+                <div className="hand-insight-copy hand-insight-copy-tight">
                   {roomState?.you?.bestHandCards?.length
                     ? `Using ${roomState.you.bestHandCards.map((card) => card.label).join(', ')}`
                     : 'Waiting for cards'}
                 </div>
-                {roomState?.you?.recommendedDiscardCards?.length ? (
-                  <div className="hand-insight-copy accent-copy">
-                    Best discard: {roomState.you.recommendedDiscardCards.map((card) => card.label).join(', ')}
+                {roomState?.you?.recommendedDiscardCards?.length || roomState?.you?.resolvedAssumedCards?.length ? (
+                  <div
+                    className="hand-insight-copy hand-insight-copy-tight accent-copy"
+                    title={[
+                      roomState?.you?.recommendedDiscardCards?.length
+                        ? `Best discard: ${roomState.you.recommendedDiscardCards.map((card) => card.label).join(', ')}`
+                        : '',
+                      roomState?.you?.resolvedAssumedCards?.length
+                        ? `Assume: ${roomState.you.resolvedAssumedCards.map((card) => card.label).join(', ')}`
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' • ')}
+                  >
+                    {roomState?.you?.recommendedDiscardCards?.length ? (
+                      <span>
+                        Best discard: {roomState.you.recommendedDiscardCards.map((card) => card.label).join(', ')}
+                      </span>
+                    ) : null}
+                    {roomState?.you?.recommendedDiscardCards?.length && roomState?.you?.resolvedAssumedCards?.length ? (
+                      <span className="hand-insight-divider"> • </span>
+                    ) : null}
+                    {roomState?.you?.resolvedAssumedCards?.length ? (
+                      <span>Assume: {roomState.you.resolvedAssumedCards.map((card) => card.label).join(', ')}</span>
+                    ) : null}
                   </div>
                 ) : null}
-                {roomState?.you?.resolvedAssumedCards?.length ? (
-                  <div className="hand-insight-copy accent-copy">
-                    Assumes: {roomState.you.resolvedAssumedCards.map((card) => card.label).join(', ')}
-                  </div>
+                {roomState?.you?.bestHandDetail ? (
+                  <div className="hand-insight-copy hand-insight-copy-tight accent-copy">{roomState.you.bestHandDetail}</div>
                 ) : null}
               </div>
             ) : (
               <div className="hand-insight hand-insight-hidden">
-                {roomState.phase === 'discarding' ? (
-                  <>
-                    Cards stay face down while you are blind. Use <strong>See Cards</strong> first, then choose your
-                    discard.
-                  </>
-                ) : (
-                  <>
-                    Cards stay face down while you are blind. Use <strong>See Cards</strong> on your turn when you want to
-                    play seen.
-                  </>
-                )}
+                <>
+                  Cards stay face down while you are blind. You can keep playing blind, or use <strong>See Cards</strong>{' '}
+                  when you want to open and discard.
+                </>
               </div>
             )}
 
             {actions.canDiscard ? (
-              <div className="discard-prompt">
-                Pick {roomState.you.pendingDiscardCount} card(s) to discard. The recommendation above already shows the
-                strongest discard choice.
+              <div className="discard-prompt discard-prompt-tight">
+                Pick {roomState.you.pendingDiscardCount} card(s) to discard.
               </div>
             ) : null}
           </div>
@@ -1121,20 +1236,9 @@ function GameView({
 
       <footer className="game-controls">
         <div className="control-buttons">
-          {roomState.phase === 'discarding' ? (
-            actionButtons.map((action) => (
-              <button
-                key={action.id}
-                className={action.className}
-                disabled={Boolean(action.disabled)}
-                onClick={action.onClick}
-              >
-                {action.label}
-              </button>
-            ))
-          ) : canAct ? (
+          {canUseFooterActions ? (
             <>
-              {actions.canRaise ? (
+              {canAct && actions.canRaise ? (
                 <div className="raise-control-inline">
                   <input
                     className="raise-input"
@@ -1267,29 +1371,63 @@ function JokerConfigurator({ configDraft, onSetConfigDraft, onToggleJokerRank, o
 
       <div className="lounge-field">
         <span>Random Jokers</span>
-        <div className="rank-grid">
-          <button
-            type="button"
-            className={`rank-pill ${configDraft.randomJokerRank ? 'rank-pill-active' : ''}`}
-            onClick={() =>
-              onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerRank: !configDraft.randomJokerRank }))
-            }
-          >
-            Random Number
-          </button>
-          <button
-            type="button"
-            className={`rank-pill ${configDraft.randomJokerSuit ? 'rank-pill-active' : ''}`}
-            onClick={() =>
-              onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerSuit: !configDraft.randomJokerSuit }))
-            }
-          >
-            Random Color
-          </button>
+        <div className="rank-grid random-joker-grid">
+          <div className="random-joker-row">
+            <button
+              type="button"
+              className={`rank-pill ${configDraft.randomJokerRank ? 'rank-pill-active' : ''}`}
+              onClick={() =>
+                onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerRank: !configDraft.randomJokerRank }))
+              }
+            >
+              Random Number
+            </button>
+            {configDraft.randomJokerRank ? (
+              <label className="random-joker-count">
+                <span>Count</span>
+                <input
+                  className="lounge-input random-joker-count-input"
+                  type="number"
+                  min="1"
+                  max="13"
+                  value={configDraft.randomJokerRankCount}
+                  onChange={(event) =>
+                    onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerRankCount: Number(event.target.value) }))
+                  }
+                />
+              </label>
+            ) : null}
+          </div>
+
+          <div className="random-joker-row">
+            <button
+              type="button"
+              className={`rank-pill ${configDraft.randomJokerSuit ? 'rank-pill-active' : ''}`}
+              onClick={() =>
+                onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerSuit: !configDraft.randomJokerSuit }))
+              }
+            >
+              Random Color
+            </button>
+            {configDraft.randomJokerSuit ? (
+              <label className="random-joker-count">
+                <span>Count</span>
+                <input
+                  className="lounge-input random-joker-count-input"
+                  type="number"
+                  min="1"
+                  max="4"
+                  value={configDraft.randomJokerSuitCount}
+                  onChange={(event) =>
+                    onSetConfigDraft(normalizeConfig({ ...configDraft, randomJokerSuitCount: Number(event.target.value) }))
+                  }
+                />
+              </label>
+            ) : null}
+          </div>
         </div>
         <div className="rank-help">
-          Selected ranks and suits stay jokers. Random options add one extra random rank or one extra random suit at
-          round start.
+          Selected ranks and suits stay jokers. Random options add extra random joker numbers or colors at round start.
         </div>
       </div>
     </>
@@ -1316,7 +1454,9 @@ function detectPreset(config) {
           JSON.stringify(presetConfig.jokerRanks || []) === JSON.stringify(normalizedConfig.jokerRanks || []) &&
           JSON.stringify(presetConfig.jokerSuits || []) === JSON.stringify(normalizedConfig.jokerSuits || []) &&
           presetConfig.randomJokerRank === normalizedConfig.randomJokerRank &&
-          presetConfig.randomJokerSuit === normalizedConfig.randomJokerSuit
+          presetConfig.randomJokerSuit === normalizedConfig.randomJokerSuit &&
+          presetConfig.randomJokerRankCount === normalizedConfig.randomJokerRankCount &&
+          presetConfig.randomJokerSuitCount === normalizedConfig.randomJokerSuitCount
         );
       },
     ) || { name: 'Custom', id: 'custom' }
@@ -1343,14 +1483,12 @@ function renderVariationSummary(config) {
   );
   lines.push(
     <div key="ranks" className="rules-summary-line">
-      Number jokers: {formatJokerRanks(config.jokerRanks)}
-      {config.randomJokerRank ? ' + Random' : ''}
+      Number jokers: {describeJokerRule(config.jokerRanks, config.randomJokerRank, config.randomJokerRankCount)}
     </div>,
   );
   lines.push(
     <div key="suits" className="rules-summary-line">
-      Color jokers: {formatJokerSuits(config.jokerSuits)}
-      {config.randomJokerSuit ? ' + Random' : ''}
+      Color jokers: {describeJokerRule(config.jokerSuits, config.randomJokerSuit, config.randomJokerSuitCount, true)}
     </div>,
   );
 
@@ -1362,21 +1500,33 @@ function describeActiveJokers(roomState) {
     return 'Kiss/Miss jokers: two kiss or miss pairs turn into jokers. The leftover card becomes your trail rank.';
   }
 
-  const rankText = formatJokerRanks(roomState?.round?.activeJokerRanks || roomState?.config?.jokerRanks || []);
-  const suitText = formatJokerSuits(roomState?.round?.activeJokerSuits || roomState?.config?.jokerSuits || []);
-  const hasRanks = rankText !== 'None';
-  const hasSuits = suitText !== 'None';
+  const activeRanks = roomState?.round?.activeJokerRanks || roomState?.config?.jokerRanks || [];
+  const activeSuits = roomState?.round?.activeJokerSuits || roomState?.config?.jokerSuits || [];
+  const rankText = formatJokerRanks(activeRanks);
+  const suitText = formatJokerSuits(activeSuits);
+  const hasRanks = activeRanks.length > 0;
+  const hasSuits = activeSuits.length > 0;
 
   if (!hasRanks && !hasSuits) {
     return 'No Jokers';
   }
 
   return [
-    hasRanks ? `Numbers: ${rankText}` : '',
-    hasSuits ? `Colors: ${suitText}` : '',
+    hasRanks ? `${activeRanks.length === 1 ? 'Number' : 'Numbers'} ${rankText} ${activeRanks.length === 1 ? 'is' : 'are'} joker${activeRanks.length === 1 ? '' : 's'}` : '',
+    hasSuits ? `${suitText} ${activeSuits.length === 1 ? 'is' : 'are'} joker color${activeSuits.length === 1 ? '' : 's'}` : '',
   ]
     .filter(Boolean)
     .join(' • ');
+}
+
+function describeJokerRule(values, hasRandom, randomCount, areSuits = false) {
+  const baseText = areSuits ? formatJokerSuits(values) : formatJokerRanks(values);
+  if (!hasRandom) {
+    return baseText;
+  }
+
+  const randomText = `${randomCount} random ${areSuits ? 'color' : 'number'} joker${randomCount === 1 ? '' : 's'}`;
+  return baseText === 'None' ? randomText : `${baseText} + ${randomText}`;
 }
 
 function initialsFor(name) {
@@ -1461,7 +1611,10 @@ function isRedSuit(suitSymbol) {
   return suitSymbol === '♥' || suitSymbol === '♦';
 }
 
-function getSeatPositions(count) {
+function getSeatPositions(count, isCompactMobile = false) {
+  if (isCompactMobile) {
+    return MOBILE_TABLE_LAYOUTS[count] || MOBILE_TABLE_POSITIONS;
+  }
   return TABLE_LAYOUTS[count] || TABLE_POSITIONS;
 }
 

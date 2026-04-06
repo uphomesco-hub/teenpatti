@@ -56,17 +56,33 @@ function sampleOne(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
 
+function sampleMany(items, count) {
+  const pool = [...items];
+  const picked = [];
+  const safeCount = Math.max(0, Math.min(Number(count || 0), pool.length));
+
+  for (let index = 0; index < safeCount; index += 1) {
+    const choice = sampleOne(pool);
+    picked.push(choice);
+    pool.splice(pool.indexOf(choice), 1);
+  }
+
+  return picked;
+}
+
 function resolveRoundJokers(config) {
+  const availableRanks = RANKS.filter((rank) => !(config.jokerRanks || []).includes(rank));
+  const availableSuits = SUITS.filter((suit) => !(config.jokerSuits || []).includes(suit.value));
   const activeJokerRanks = Array.from(
     new Set([
       ...(config.jokerRanks || []),
-      ...(config.randomJokerRank ? [sampleOne(RANKS)] : []),
+      ...(config.randomJokerRank ? sampleMany(availableRanks, config.randomJokerRankCount) : []),
     ]),
   ).sort((left, right) => right - left);
   const activeJokerSuits = Array.from(
     new Set([
       ...(config.jokerSuits || []),
-      ...(config.randomJokerSuit ? [sampleOne(SUITS).value] : []),
+      ...(config.randomJokerSuit ? sampleMany(availableSuits, config.randomJokerSuitCount).map((suit) => suit.value) : []),
     ]),
   );
 
@@ -160,6 +176,18 @@ function serializeResolvedAssumedCards(room, cards) {
     isAssumed: true,
     isJoker: false,
   }));
+}
+
+function formatKissMissDetail(score) {
+  if (!score?.pairs?.length || !score?.leftoverCard) {
+    return '';
+  }
+
+  const pairText = score.pairs
+    .map((pair) => `${pair.kind === 'kiss' ? 'Kiss' : 'Miss'} ${pair.cards.map((card) => card.label).join('-')}`)
+    .join(' • ');
+
+  return `${pairText} • Leftover ${score.leftoverCard.label} makes the trail`;
 }
 
 function getActivePlayers(room) {
@@ -505,7 +533,7 @@ export function startRound(room, playerId) {
   };
 
   assignSeats(room);
-  room.phase = room.config.cardsDealt > room.config.cardsToKeep ? 'discarding' : 'betting';
+  room.phase = 'betting';
   room.prompt = null;
   room.sideShowReveal = null;
 
@@ -539,8 +567,8 @@ export function startRound(room, playerId) {
       room,
       `Active jokers this round: ${
         [
-          room.round.activeJokerRanks.length ? `ranks ${room.round.activeJokerRanks.join(', ')}` : '',
-          room.round.activeJokerSuits.length ? `suits ${room.round.activeJokerSuits.join(', ')}` : '',
+          room.round.activeJokerRanks.length ? `number ${room.round.activeJokerRanks.join(', ')}` : '',
+          room.round.activeJokerSuits.length ? `color ${room.round.activeJokerSuits.join(', ')}` : '',
         ]
           .filter(Boolean)
           .join(' • ')
@@ -548,12 +576,11 @@ export function startRound(room, playerId) {
     );
   }
 
-  if (room.phase === 'betting') {
-    pushHistory(room, 'Betting is live. Everyone starts blind until they look at their cards.');
-  } else {
+  pushHistory(room, 'Betting is live. Everyone starts blind until they look at their cards.');
+  if (room.config.cardsDealt > room.config.cardsToKeep) {
     pushHistory(
       room,
-      `Discard phase is live. Each player must see their cards, then discard ${room.config.cardsDealt - room.config.cardsToKeep} card.`,
+      `Discard is optional after seeing cards. Keep playing blind if you want, or open later and discard ${room.config.cardsDealt - room.config.cardsToKeep} card(s).`,
     );
   }
 
@@ -561,8 +588,8 @@ export function startRound(room, playerId) {
 }
 
 function handleDiscard(room, player, payload) {
-  if (room.phase !== 'discarding') {
-    return { error: 'This round is not in discard mode.' };
+  if (room.phase !== 'betting') {
+    return { error: 'Discard is only available during an active betting round.' };
   }
   if (!player.pendingDiscardCount) {
     return { error: 'Your hand is already locked.' };
@@ -590,7 +617,7 @@ function handleDiscard(room, player, payload) {
   );
 
   const pending = room.players.some((entry) => entry.pendingDiscardCount > 0);
-  if (!pending) {
+  if (!pending && room.config.cardsDealt > room.config.cardsToKeep) {
     beginBetting(room);
   }
 
@@ -598,10 +625,10 @@ function handleDiscard(room, player, payload) {
 }
 
 function handleLookCards(room, player) {
-  if (room.phase !== 'betting' && room.phase !== 'discarding') {
+  if (room.phase !== 'betting') {
     return { error: 'Cards can only be opened during an active round.' };
   }
-  if (room.phase === 'betting' && room.round.actionPlayerId !== player.id) {
+  if (room.round.actionPlayerId !== player.id && !player.pendingDiscardCount) {
     return { error: 'It is not your turn.' };
   }
   if (player.hasSeenCards) {
@@ -609,11 +636,12 @@ function handleLookCards(room, player) {
   }
 
   player.hasSeenCards = true;
-  if (room.phase === 'betting') {
+  if (player.pendingDiscardCount > 0) {
+    player.status = 'seen';
+    pushHistory(room, `${player.name} saw their cards and can now discard whenever they want.`);
+  } else {
     player.status = 'seen';
     pushHistory(room, `${player.name} saw their cards and is now playing seen.`);
-  } else {
-    pushHistory(room, `${player.name} saw their cards and can now discard.`);
   }
   return { ok: true };
 }
@@ -828,10 +856,8 @@ function getAvailableActions(room, player) {
   const minRaiseAmount = room.round ? getMinRaiseAmount(room, player) : 0;
 
   return {
-    canDiscard: room.phase === 'discarding' && player.pendingDiscardCount > 0 && player.hasSeenCards,
-    canLook:
-      ((room.phase === 'betting' && isTurn) || (room.phase === 'discarding' && player.pendingDiscardCount > 0)) &&
-      !player.hasSeenCards,
+    canDiscard: room.phase === 'betting' && player.pendingDiscardCount > 0 && player.hasSeenCards,
+    canLook: room.phase === 'betting' && !player.hasSeenCards && (isTurn || player.pendingDiscardCount > 0),
     canCall:
       room.phase === 'betting' &&
       isTurn &&
@@ -1044,6 +1070,7 @@ export function serializeRoomForPlayer(room, playerId) {
           hand: canViewerSeeHand ? viewer.hand.map((cardId) => serializeCard(room, cardId)).filter(Boolean) : [],
           discarded: canViewerSeeHand ? viewer.discarded.map((cardId) => serializeCard(room, cardId)).filter(Boolean) : [],
           bestHandLabel: viewerBestHand?.label || '',
+          bestHandDetail: room.config.specialHandMode === 'kiss_miss' ? formatKissMissDetail(viewerBestHand) : '',
           bestHandCards: serializeBestHand(room, viewerBestHand?.cards || []),
           recommendedDiscardCards: serializeDiscardCards(room, viewerBestHand?.discardedCards || []),
           assumedWildCards: room.config.assumedWildCards,

@@ -79,7 +79,7 @@ function isConfiguredJoker(card, jokerSettings) {
   );
 }
 
-function evaluateConcreteHand(cards, jokerCountUsed) {
+function evaluateConcreteHand(cards, jokerCountUsed, actualJokerCountUsed = jokerCountUsed) {
   const ranks = cards.map((card) => card.rank);
   const suits = cards.map((card) => card.suit);
   const rankCounts = new Map();
@@ -109,7 +109,7 @@ function evaluateConcreteHand(cards, jokerCountUsed) {
     };
   }
 
-  if (flush && straightValue && jokerCountUsed === 0) {
+  if (flush && straightValue && actualJokerCountUsed === 0) {
     const straightRanks = [...ranks].sort((left, right) => right - left);
     return {
       category: 'pureSequence',
@@ -190,7 +190,7 @@ function buildCandidates(cards, jokerSettings, assumedWildCards = 0) {
   }
 
   if (!jokers.length) {
-    return [{ cards: concrete, jokerCountUsed: 0, assumedCards: [] }];
+    return [{ cards: concrete, jokerCountUsed: 0, actualJokerCountUsed: 0, assumedCards: [] }];
   }
 
   const substitutions = [];
@@ -213,6 +213,7 @@ function buildCandidates(cards, jokerSettings, assumedWildCards = 0) {
         cards: [...concrete, ...currentCards],
         assumedCards: [...assumedCards],
         jokerCountUsed: jokers.length,
+        actualJokerCountUsed: jokers.filter((entry) => entry.source === 'joker').length,
       });
       return;
     }
@@ -326,6 +327,10 @@ function evaluateKissMissHand(cards, rankingMode = 'classic') {
       }
 
       const pairKinds = [firstKind, secondKind];
+      const pairs = [
+        { kind: firstKind, cards: firstPair },
+        { kind: secondKind, cards: secondPair },
+      ];
       const current = {
         category: 'kissMissTrail',
         categoryRank: 7,
@@ -335,6 +340,7 @@ function evaluateKissMissHand(cards, rankingMode = 'classic') {
         leftoverCard: leftover,
         pairingCards: [...firstPair, ...secondPair],
         pairKinds,
+        pairs,
         fallbackScore,
       };
 
@@ -385,7 +391,11 @@ export function evaluateTeenPattiHand(
   let best = null;
 
   for (const candidate of buildCandidates(cards, jokerSettings, assumedWildCards)) {
-    const score = evaluateConcreteHand(candidate.cards, candidate.jokerCountUsed);
+      const score = evaluateConcreteHand(
+        candidate.cards,
+        candidate.jokerCountUsed,
+        candidate.actualJokerCountUsed,
+      );
     if (!best || compareScores(score, best) > 0) {
       best = {
         ...score,
