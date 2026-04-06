@@ -309,7 +309,6 @@ function Table() {
     <div className={`lounge-shell ${isLobby ? 'lounge-shell-lobby' : 'lounge-shell-game'}`}>
       <TopBar
         roomId={normalizedRoomId}
-        isLobby={isLobby}
         onLeave={leaveTable}
         onCopyInvite={handleCopyInvite}
         inviteCopied={inviteCopied}
@@ -321,7 +320,6 @@ function Table() {
           configDraft={configDraft}
           presets={presets}
           chipDrafts={chipDrafts}
-          activityLog={activityLog}
           currentPreset={currentPreset}
           onSetConfigDraft={setConfigDraft}
           onChangeChipDraft={(playerId, value) =>
@@ -365,8 +363,6 @@ function LobbyView({
   configDraft,
   presets,
   chipDrafts,
-  activityLog,
-  currentPreset,
   onSetConfigDraft,
   onChangeChipDraft,
   onToggleJokerRank,
@@ -377,152 +373,163 @@ function LobbyView({
 }) {
   const canEdit = Boolean(roomState?.you?.isHost);
   const draftPreset = detectPreset(configDraft);
+  const livePreset = detectPreset(roomState?.config);
 
   return (
-    <div className="lounge-layout lobby-layout">
-      <aside className="lounge-rail">
-        <TableRail roomState={roomState} currentPreset={currentPreset} activityLog={activityLog} />
-      </aside>
+    <main className="lobby-main lobby-main-full">
+      <section className="lobby-left">
+        <div className="lobby-heading">
+          <h1>{canEdit ? 'Setup Your Table' : 'Waiting For Host'}</h1>
+          <p>
+            {canEdit
+              ? 'Refine the stakes and variation before the host starts the game.'
+              : 'You can see the current table setup here while the host prepares the next game.'}
+          </p>
+        </div>
 
-      <main className="lobby-main">
-        <section className="lobby-left">
-          <div className="lobby-heading">
-            <h1>Setup Your Table</h1>
-            <p>Refine the stakes and variation before the host starts the game.</p>
-          </div>
+        <div className="glass-card lobby-config-card">
+          {canEdit ? (
+            <>
+              <label className="lounge-field">
+                <span>Variation Preset</span>
+                <select
+                  className="lounge-input"
+                  value={draftPreset?.id || 'classic'}
+                  onChange={(event) => onSetConfigDraft(buildConfigFromPreset(event.target.value))}
+                >
+                  {presets.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <div className="glass-card lobby-config-card">
-            {canEdit ? (
-              <>
+              <div className="lobby-form-grid">
                 <label className="lounge-field">
-                  <span>Variation Preset</span>
-                  <select
+                  <span>Boot Amount</span>
+                  <input
                     className="lounge-input"
-                    value={draftPreset?.id || 'classic'}
-                    onChange={(event) => onSetConfigDraft(buildConfigFromPreset(event.target.value))}
-                  >
-                    {presets.map((preset) => (
-                      <option key={preset.id} value={preset.id}>
-                        {preset.name}
-                      </option>
-                    ))}
-                  </select>
+                    type="number"
+                    value={configDraft.bootAmount}
+                    onChange={(event) =>
+                      onSetConfigDraft(normalizeConfig({ ...configDraft, bootAmount: Number(event.target.value) }))
+                    }
+                  />
                 </label>
-
-                <div className="lobby-form-grid">
-                  <label className="lounge-field">
-                    <span>Boot Amount</span>
-                    <input
-                      className="lounge-input"
-                      type="number"
-                      value={configDraft.bootAmount}
-                      onChange={(event) =>
-                        onSetConfigDraft(normalizeConfig({ ...configDraft, bootAmount: Number(event.target.value) }))
-                      }
-                    />
-                  </label>
-
-                  <label className="lounge-field">
-                    <span>Starting Chips</span>
-                    <input
-                      className="lounge-input"
-                      type="number"
-                      value={configDraft.startingChips}
-                      onChange={(event) =>
-                        onSetConfigDraft(normalizeConfig({ ...configDraft, startingChips: Number(event.target.value) }))
-                      }
-                    />
-                  </label>
-
-                  <label className="lounge-field">
-                    <span>Cards Dealt</span>
-                    <input
-                      className="lounge-input"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={configDraft.cardsDealt}
-                      onChange={(event) =>
-                        onSetConfigDraft(normalizeConfig({ ...configDraft, cardsDealt: Number(event.target.value) }))
-                      }
-                    />
-                  </label>
-
-                  <label className="lounge-field">
-                    <span>Actual Cards Kept</span>
-                    <input
-                      className="lounge-input"
-                      type="number"
-                      min="1"
-                      max="3"
-                      value={configDraft.cardsToKeep}
-                      onChange={(event) =>
-                        onSetConfigDraft(normalizeConfig({ ...configDraft, cardsToKeep: Number(event.target.value) }))
-                      }
-                    />
-                  </label>
-                </div>
-
-                <div className="lobby-note">
-                  Final hand is always 3 cards. If kept cards are fewer than 3, the missing cards are assumed as the
-                  best-fit wildcards.
-                </div>
-
-                <div className="rules-summary-card">
-                  <div className="rules-summary-kicker">Current table shape</div>
-                  <div className="rules-summary-line">
-                    Deal {configDraft.cardsDealt}, keep {configDraft.cardsToKeep}, assume {configDraft.assumedWildCards}
-                  </div>
-                  <div className="rules-summary-line">Jokers: {formatJokerRanks(configDraft.jokerRanks)}</div>
-                </div>
 
                 <label className="lounge-field">
-                  <span>Joker Cards</span>
-                  <div className="rank-grid">
-                    {RANK_OPTIONS.map((rank) => (
-                      <button
-                        key={rank.value}
-                        type="button"
-                        className={`rank-pill ${configDraft.jokerRanks.includes(rank.value) ? 'rank-pill-active' : ''}`}
-                        onClick={() => onToggleJokerRank(rank.value)}
-                      >
-                        {rank.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="rank-help">
-                    Selected ranks act as jokers in that variation. A = Ace, K = King, Q = Queen, J = Jack.
-                  </div>
+                  <span>Starting Chips</span>
+                  <input
+                    className="lounge-input"
+                    type="number"
+                    value={configDraft.startingChips}
+                    onChange={(event) =>
+                      onSetConfigDraft(normalizeConfig({ ...configDraft, startingChips: Number(event.target.value) }))
+                    }
+                  />
                 </label>
 
-                <div className="lobby-note">
-                  Blind/seen betting, side show, and show are always enabled at this table.
-                </div>
+                <label className="lounge-field">
+                  <span>Cards Dealt</span>
+                  <input
+                    className="lounge-input"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={configDraft.cardsDealt}
+                    onChange={(event) =>
+                      onSetConfigDraft(normalizeConfig({ ...configDraft, cardsDealt: Number(event.target.value) }))
+                    }
+                  />
+                </label>
 
-                <div className="lobby-actions">
-                  <button className="lounge-cta lounge-cta-secondary" onClick={onSaveRules}>
-                    Save Table Rules
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="lobby-wait-card">
-                <h2>Waiting for host setup</h2>
-                <p>The host is choosing the variation and stack sizes. You will see the final table settings here.</p>
+                <label className="lounge-field">
+                  <span>Actual Cards Kept</span>
+                  <input
+                    className="lounge-input"
+                    type="number"
+                    min="1"
+                    max="3"
+                    value={configDraft.cardsToKeep}
+                    onChange={(event) =>
+                      onSetConfigDraft(normalizeConfig({ ...configDraft, cardsToKeep: Number(event.target.value) }))
+                    }
+                  />
+                </label>
               </div>
-            )}
-          </div>
 
-          <div className="lobby-info-strip">
-            <span className="material-symbols-outlined">info</span>
-            <p>
-              Only the host can choose the variation and start the game. Once the round starts, the table switches to
-              gameplay mode and the rules editor disappears.
-            </p>
-          </div>
-        </section>
+              <div className="lobby-note">
+                Final hand is always 3 cards. If kept cards are fewer than 3, the missing cards are assumed as the
+                best-fit wildcards.
+              </div>
 
-        <aside className="lobby-right">
+              <div className="rules-summary-card">
+                <div className="rules-summary-kicker">Current table shape</div>
+                <div className="rules-summary-line">
+                  Deal {configDraft.cardsDealt}, keep {configDraft.cardsToKeep}, assume {configDraft.assumedWildCards}
+                </div>
+                <div className="rules-summary-line">Jokers: {formatJokerRanks(configDraft.jokerRanks)}</div>
+              </div>
+
+              <label className="lounge-field">
+                <span>Joker Cards</span>
+                <div className="rank-grid">
+                  {RANK_OPTIONS.map((rank) => (
+                    <button
+                      key={rank.value}
+                      type="button"
+                      className={`rank-pill ${configDraft.jokerRanks.includes(rank.value) ? 'rank-pill-active' : ''}`}
+                      onClick={() => onToggleJokerRank(rank.value)}
+                    >
+                      {rank.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="rank-help">
+                  Selected ranks act as jokers in that variation. A = Ace, K = King, Q = Queen, J = Jack.
+                </div>
+              </label>
+
+              <div className="lobby-note">
+                Blind/seen betting, side show, and show are always enabled at this table.
+              </div>
+
+              <div className="lobby-actions">
+                <button className="lounge-cta lounge-cta-secondary" onClick={onSaveRules}>
+                  Save Table Rules
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="rules-summary-card">
+                <div className="rules-summary-kicker">Current variation</div>
+                <div className="rules-summary-line">{livePreset?.name || 'Custom'}</div>
+                <div className="rules-summary-line">Boot: {formatExactChips(roomState.config.bootAmount)}</div>
+                <div className="rules-summary-line">Starting chips: {formatExactChips(roomState.config.startingChips)}</div>
+                <div className="rules-summary-line">
+                  Deal {roomState.config.cardsDealt}, keep {roomState.config.cardsToKeep}, assume {roomState.config.assumedWildCards}
+                </div>
+                <div className="rules-summary-line">Jokers: {formatJokerRanks(roomState.config.jokerRanks)}</div>
+              </div>
+
+              <div className="lobby-note">
+                The host controls the table setup. This panel updates whenever the saved table rules change.
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="lobby-info-strip">
+          <span className="material-symbols-outlined">info</span>
+          <p>
+            Only the host can choose the variation and start the game. Once the round starts, the setup panel disappears.
+          </p>
+        </div>
+      </section>
+
+      <aside className="lobby-right">
           <div className="lobby-guest-header">
             <h2>The Guest List</h2>
             <span>{roomState.players.length} / {roomState.config.maxPlayers} joined</span>
@@ -572,9 +579,8 @@ function LobbyView({
           </div>
 
           {error ? <div className="lounge-error">{error}</div> : null}
-        </aside>
-      </main>
-    </div>
+      </aside>
+    </main>
   );
 }
 
@@ -862,6 +868,7 @@ function GameView({
                   >
                     <span className={`hero-card-corner ${isRedSuit(card.suitSymbol) ? 'hero-card-corner-red' : ''}`}>{card.label}</span>
                     <span className={`hero-card-rank ${isRedSuit(card.suitSymbol) ? 'hero-card-rank-red' : ''}`}>{card.label}</span>
+                    {selectedDiscards.includes(card.id) ? <span className="hero-card-selected-badge">Selected</span> : null}
                     {card.isJoker ? <span className="hero-card-chip">JOKER</span> : null}
                   </button>
                 ))
@@ -907,8 +914,17 @@ function GameView({
               </div>
             ) : (
               <div className="hand-insight hand-insight-hidden">
-                Cards stay face down while you are blind. Use <strong>See Cards</strong> on your turn when you want to
-                play seen.
+                {roomState.phase === 'discarding' ? (
+                  <>
+                    Cards stay face down while you are blind. Use <strong>See Cards</strong> first, then choose your
+                    discard.
+                  </>
+                ) : (
+                  <>
+                    Cards stay face down while you are blind. Use <strong>See Cards</strong> on your turn when you want to
+                    play seen.
+                  </>
+                )}
               </div>
             )}
 
@@ -1195,62 +1211,10 @@ function GameView({
   );
 }
 
-function TableRail({ roomState, currentPreset, activityLog }) {
-  return (
-    <>
-      <div className="rail-header">
-        <div className="rail-host-avatar">{initialsFor(roomState.players.find((player) => player.id === roomState.hostPlayerId)?.name || 'H')}</div>
-        <div>
-          <div className="rail-table-code">Table #{roomState.id}</div>
-          <div className="rail-table-meta">{currentPreset?.name || 'Custom Variation'}</div>
-        </div>
-      </div>
-
-      <div className="rail-nav">
-        <div className="rail-nav-item rail-nav-item-active">
-          <span className="material-symbols-outlined">chat</span>
-          <span>Live Chat</span>
-        </div>
-        <div className="rail-nav-item">
-          <span className="material-symbols-outlined">list_alt</span>
-          <span>Activity Log</span>
-        </div>
-        <div className="rail-nav-item">
-          <span className="material-symbols-outlined">military_tech</span>
-          <span>Variation: {currentPreset?.name || 'Custom'}</span>
-        </div>
-      </div>
-
-      <div className="rail-log">
-        {activityLog.slice(0, 8).map((event) => (
-          <div key={event.id} className="rail-log-item">
-            {event.message}
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function TopBar({ roomId, isLobby, onLeave, onCopyInvite, inviteCopied }) {
+function TopBar({ roomId, onLeave, onCopyInvite, inviteCopied }) {
   return (
     <header className="lounge-topbar">
       <div className="lounge-brand">The Grandmaster&apos;s Lounge</div>
-      <nav className="lounge-topnav">
-        {isLobby ? (
-          <>
-            <span>Host Setup</span>
-            <span>Players</span>
-            <span className="topnav-active">Lobby</span>
-          </>
-        ) : (
-          <>
-            <span>Live Table</span>
-            <span>Action Bar</span>
-            <span className="topnav-active">Game Log</span>
-          </>
-        )}
-      </nav>
       <div className="lounge-top-actions">
         <button className="chip-badge" onClick={onCopyInvite}>
           {inviteCopied ? 'Copied' : roomId}
@@ -1258,8 +1222,6 @@ function TopBar({ roomId, isLobby, onLeave, onCopyInvite, inviteCopied }) {
         <button className="recharge-btn" onClick={onCopyInvite}>
           {inviteCopied ? 'Copied' : 'Invite'}
         </button>
-        <span className="material-symbols-outlined top-icon">history</span>
-        <span className="material-symbols-outlined top-icon">settings</span>
         <span className="material-symbols-outlined top-icon" onClick={onLeave}>logout</span>
       </div>
     </header>

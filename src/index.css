@@ -2312,10 +2312,30 @@ body.viewport-locked {
   border: 1px solid rgba(255, 255, 255, 0.45);
   color: #171717;
   box-shadow: 0 20px 36px rgba(0, 0, 0, 0.32);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
 .hero-card-selected {
-  box-shadow: 0 0 0 2px rgba(47, 109, 255, 0.4), 0 20px 36px rgba(0, 0, 0, 0.32);
+  background: linear-gradient(180deg, #eef4ff 0%, #dce7ff 100%);
+  border-color: rgba(47, 109, 255, 0.72);
+  box-shadow:
+    0 0 0 4px rgba(47, 109, 255, 0.34),
+    0 18px 36px rgba(12, 45, 122, 0.28);
+  z-index: 2;
+}
+
+.hero-card-selected .hero-card-rank,
+.hero-card-selected .hero-card-corner {
+  color: #1744a3;
+}
+
+.hero-card-selected .hero-card-rank-red,
+.hero-card-selected .hero-card-corner-red {
+  color: #a3163d;
 }
 
 .hero-card-hidden {
@@ -2367,6 +2387,21 @@ body.viewport-locked {
   font-size: 0.55rem;
   letter-spacing: 0.12em;
   color: var(--lounge-gold);
+}
+
+.hero-card-selected-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(47, 109, 255, 0.94);
+  color: #eef4ff;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(47, 109, 255, 0.28);
 }
 
 .hand-insight {

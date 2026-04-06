@@ -492,7 +492,10 @@ export function startRound(room, playerId) {
   if (room.phase === 'betting') {
     pushHistory(room, 'Betting is live. Everyone starts blind until they look at their cards.');
   } else {
-    pushHistory(room, `Discard phase is live. Each player must discard ${room.config.cardsDealt - room.config.cardsToKeep} card.`);
+    pushHistory(
+      room,
+      `Discard phase is live. Each player must see their cards, then discard ${room.config.cardsDealt - room.config.cardsToKeep} card.`,
+    );
   }
 
   return { ok: true };
@@ -504,6 +507,9 @@ function handleDiscard(room, player, payload) {
   }
   if (!player.pendingDiscardCount) {
     return { error: 'Your hand is already locked.' };
+  }
+  if (!player.hasSeenCards) {
+    return { error: 'See your cards before discarding.' };
   }
 
   const discardIds = Array.from(new Set(payload.discardIds || []));
@@ -533,10 +539,10 @@ function handleDiscard(room, player, payload) {
 }
 
 function handleLookCards(room, player) {
-  if (room.phase !== 'betting') {
-    return { error: 'Cards can only be opened during betting.' };
+  if (room.phase !== 'betting' && room.phase !== 'discarding') {
+    return { error: 'Cards can only be opened during an active round.' };
   }
-  if (room.round.actionPlayerId !== player.id) {
+  if (room.phase === 'betting' && room.round.actionPlayerId !== player.id) {
     return { error: 'It is not your turn.' };
   }
   if (player.hasSeenCards) {
@@ -544,8 +550,12 @@ function handleLookCards(room, player) {
   }
 
   player.hasSeenCards = true;
-  player.status = 'seen';
-  pushHistory(room, `${player.name} saw their cards and is now playing seen.`);
+  if (room.phase === 'betting') {
+    player.status = 'seen';
+    pushHistory(room, `${player.name} saw their cards and is now playing seen.`);
+  } else {
+    pushHistory(room, `${player.name} saw their cards and can now discard.`);
+  }
   return { ok: true };
 }
 
@@ -759,8 +769,10 @@ function getAvailableActions(room, player) {
   const minRaiseAmount = room.round ? getMinRaiseAmount(room, player) : 0;
 
   return {
-    canDiscard: room.phase === 'discarding' && player.pendingDiscardCount > 0,
-    canLook: room.phase === 'betting' && isTurn && !player.hasSeenCards,
+    canDiscard: room.phase === 'discarding' && player.pendingDiscardCount > 0 && player.hasSeenCards,
+    canLook:
+      ((room.phase === 'betting' && isTurn) || (room.phase === 'discarding' && player.pendingDiscardCount > 0)) &&
+      !player.hasSeenCards,
     canCall:
       room.phase === 'betting' &&
       isTurn &&
@@ -799,7 +811,7 @@ function serializePlayer(room, player, isSelf) {
   const revealCards =
     room.phase === 'finished' ||
     room.round?.showAllCards ||
-    (isSelf && (player.hasSeenCards || room.phase === 'discarding'));
+    (isSelf && player.hasSeenCards);
   const cards = revealCards ? player.hand.map((cardId) => serializeCard(room, cardId)) : [];
   const handScore = revealCards && player.hand.length >= room.config.cardsToKeep
     ? evaluateBestTeenPattiHand(
@@ -924,7 +936,7 @@ export function finalizeSideShowReveal(room) {
 export function serializeRoomForPlayer(room, playerId) {
   const viewer = getPlayer(room, playerId);
   const canViewerSeeHand = Boolean(
-    viewer && (viewer.hasSeenCards || room.phase === 'discarding' || room.phase === 'finished' || room.round?.showAllCards),
+    viewer && (viewer.hasSeenCards || room.phase === 'finished' || room.round?.showAllCards),
   );
   const viewerBestHand = canViewerSeeHand && viewer?.hand?.length >= room.config.cardsToKeep
     ? evaluateBestTeenPattiHand(
