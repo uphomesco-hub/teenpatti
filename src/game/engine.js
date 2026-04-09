@@ -190,26 +190,38 @@ function formatKissMissDetail(score) {
   return `${pairText} • Leftover ${score.leftoverCard.label} makes the trail`;
 }
 
+function isActivePlayer(player) {
+  return player?.status === 'active' || player?.status === 'seen';
+}
+
 function getActivePlayers(room) {
-  return room.players.filter((player) => player.status === 'active' || player.status === 'seen');
+  return room.players.filter((player) => isActivePlayer(player));
 }
 
 function getActiveSeatPlayers(room) {
   return getActivePlayers(room).sort((left, right) => left.seat - right.seat);
 }
 
-function getNextActivePlayer(room, currentPlayerId) {
+function getNextActivePlayer(room, currentPlayerId, currentSeat = null) {
   const ordered = getActiveSeatPlayers(room);
   if (!ordered.length) {
     return null;
   }
 
   const currentIndex = ordered.findIndex((player) => player.id === currentPlayerId);
-  if (currentIndex === -1) {
+  if (currentIndex !== -1) {
+    return ordered[(currentIndex + 1) % ordered.length];
+  }
+
+  const referenceSeat = Number.isInteger(currentSeat)
+    ? currentSeat
+    : room.players.find((player) => player.id === currentPlayerId)?.seat;
+
+  if (!Number.isInteger(referenceSeat)) {
     return ordered[0];
   }
 
-  return ordered[(currentIndex + 1) % ordered.length];
+  return ordered.find((player) => player.seat >= referenceSeat) || ordered[0];
 }
 
 function getNextSeatedPlayer(players, currentSeat) {
@@ -297,12 +309,12 @@ function maybeFinishRound(room) {
   return true;
 }
 
-function advanceTurn(room, fromPlayerId) {
+function advanceTurn(room, fromPlayerId, fromSeat = null) {
   if (maybeFinishRound(room)) {
     return;
   }
 
-  const nextPlayer = getNextActivePlayer(room, fromPlayerId);
+  const nextPlayer = getNextActivePlayer(room, fromPlayerId, fromSeat);
   if (!nextPlayer) {
     return;
   }
@@ -451,6 +463,9 @@ export function leaveRoom(room, playerId) {
     return { deleted: false };
   }
 
+  const leavingSeat = player.seat;
+  const leavingWasActionPlayer = room.round?.actionPlayerId === playerId;
+
   room.players = room.players.filter((entry) => entry.id !== playerId);
   assignSeats(room);
   ensureController(room);
@@ -465,7 +480,10 @@ export function leaveRoom(room, playerId) {
 
   pushHistory(room, `${player.name} left the table.`);
   if (room.phase !== 'lobby' && room.phase !== 'finished') {
-    maybeFinishRound(room);
+    const finished = maybeFinishRound(room);
+    if (!finished && leavingWasActionPlayer) {
+      advanceTurn(room, playerId, leavingSeat);
+    }
   }
   return { deleted: false };
 }
