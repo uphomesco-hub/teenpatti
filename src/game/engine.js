@@ -293,6 +293,8 @@ function finishRound(room, winnerPlayer, reason) {
   room.phase = 'finished';
   room.winnerId = winnerPlayer.id;
   room.round.winnerId = winnerPlayer.id;
+  room.prompt = null;
+  room.sideShowReveal = null;
   winnerPlayer.chips += room.round.pot;
   winnerPlayer.status = 'winner';
 
@@ -465,6 +467,7 @@ export function leaveRoom(room, playerId) {
 
   const leavingSeat = player.seat;
   const leavingWasActionPlayer = room.round?.actionPlayerId === playerId;
+  const pendingPrompt = room.prompt;
 
   room.players = room.players.filter((entry) => entry.id !== playerId);
   assignSeats(room);
@@ -481,7 +484,17 @@ export function leaveRoom(room, playerId) {
   pushHistory(room, `${player.name} left the table.`);
   if (room.phase !== 'lobby' && room.phase !== 'finished') {
     const finished = maybeFinishRound(room);
-    if (!finished && leavingWasActionPlayer) {
+    if (finished) {
+      return { deleted: false };
+    }
+
+    if (
+      pendingPrompt?.kind === 'side_show' &&
+      (pendingPrompt.requestorId === playerId || pendingPrompt.targetId === playerId)
+    ) {
+      room.prompt = null;
+      advanceTurn(room, pendingPrompt.requestorId, pendingPrompt.requestorId === playerId ? leavingSeat : null);
+    } else if (leavingWasActionPlayer && room.phase !== 'side_show_reveal') {
       advanceTurn(room, playerId, leavingSeat);
     }
   }
@@ -570,6 +583,7 @@ export function startRound(room, playerId) {
     actionPlayerId: '',
     winnerId: '',
     showAllCards: false,
+    showdownPlayerIds: [],
     activeJokerRanks: resolvedJokers.activeJokerRanks,
     activeJokerSuits: resolvedJokers.activeJokerSuits,
   };
@@ -811,7 +825,9 @@ function handlePromptAnswer(room, player, payload) {
   room.phase = 'side_show_reveal';
   room.sideShowReveal = {
     requestorId: requestor.id,
+    requestorSeat: requestor.seat,
     targetId: target.id,
+    targetSeat: target.seat,
     winnerId: result.winnerPlayer.id,
     loserId: result.loserPlayer.id,
     endsAt: Date.now() + 10_000,
@@ -844,6 +860,7 @@ function handleShow(room, player) {
   creditPot(room, stake);
   const opponent = activePlayers.find((entry) => entry.id !== player.id);
   const result = evaluateWinner(room, player, opponent);
+  room.round.showdownPlayerIds = [player.id, opponent.id];
   revealAllHands(room);
   finishRound(room, result.winnerPlayer, `${player.name} asked for show against ${opponent.name}.`);
   return { ok: true };
@@ -1026,12 +1043,13 @@ function serializeSideShowReveal(room, playerId) {
     targetName: target?.name || 'Player',
     winnerName: winner?.name || 'Player',
     loserName: loser?.name || 'Player',
-    requestorHandLabel: requestorHand?.label || '',
-    targetHandLabel: targetHand?.label || '',
+    requestorHandLabel: viewerIsParticipant ? requestorHand?.label || '' : '',
+    targetHandLabel: viewerIsParticipant ? targetHand?.label || '' : '',
     requestorCards: viewerIsParticipant ? requestor?.hand.map((cardId) => serializeCard(room, cardId)).filter(Boolean) || [] : [],
     targetCards: viewerIsParticipant ? target?.hand.map((cardId) => serializeCard(room, cardId)).filter(Boolean) || [] : [],
     endsAt: room.sideShowReveal.endsAt,
-    visibleToYou: viewerIsParticipant,
+    visibleToYou: true,
+    canSeeHands: viewerIsParticipant,
   };
 }
 
@@ -1043,6 +1061,8 @@ export function finalizeSideShowReveal(room) {
   const requestor = getPlayer(room, room.sideShowReveal.requestorId);
   const loser = getPlayer(room, room.sideShowReveal.loserId);
   const winner = getPlayer(room, room.sideShowReveal.winnerId);
+  const requestorId = room.sideShowReveal.requestorId;
+  const requestorSeat = requestor?.seat ?? room.sideShowReveal.requestorSeat ?? null;
 
   if (loser) {
     loser.status = 'packed';
@@ -1052,8 +1072,8 @@ export function finalizeSideShowReveal(room) {
   room.sideShowReveal = null;
   room.phase = 'betting';
 
-  if (!maybeFinishRound(room) && requestor) {
-    advanceTurn(room, requestor.id);
+  if (!maybeFinishRound(room)) {
+    advanceTurn(room, requestor?.id || requestorId, requestorSeat);
   }
 
   return { ok: true };
@@ -1091,6 +1111,7 @@ export function serializeRoomForPlayer(room, playerId) {
           dealerPlayerId: room.round.dealerPlayerId,
           actionPlayerId: room.round.actionPlayerId,
           showAllCards: room.round.showAllCards,
+          showdownPlayerIds: room.round.showdownPlayerIds || [],
           activeJokerRanks: room.round.activeJokerRanks || [],
           activeJokerSuits: room.round.activeJokerSuits || [],
           specialHandMode: room.config.specialHandMode,

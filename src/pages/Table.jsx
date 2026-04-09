@@ -725,6 +725,12 @@ function GameView({
   const latestEvent = roomState?.history?.[roomState.history.length - 1] || null;
   const parsedEvent = useMemo(() => parseTableEvent(latestEvent, roomState.players), [latestEvent, roomState.players]);
   const sideShowReveal = roomState?.sideShowReveal || null;
+  const finalShowdownPlayers = useMemo(() => {
+    const playerIds = roomState?.round?.showdownPlayerIds || [];
+    return playerIds
+      .map((playerId) => roomState.players.find((player) => player.id === playerId))
+      .filter((player) => player?.cards?.length);
+  }, [roomState.players, roomState?.round?.showdownPlayerIds]);
   const [sideShowNow, setSideShowNow] = useState(0);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [showLogPanel, setShowLogPanel] = useState(false);
@@ -741,7 +747,7 @@ function GameView({
     parsedRaiseAmount <= (actions.maxRaiseAmount || 0) &&
     parsedRaiseAmount % (actions.raiseStep || 1) === 0;
   const sideShowCountdown =
-    sideShowReveal?.visibleToYou && sideShowReveal?.endsAt
+    sideShowReveal?.endsAt
       ? Math.max(
           0,
           Math.ceil((sideShowReveal.endsAt - (sideShowNow || sideShowReveal.endsAt - 10_000)) / 1000),
@@ -749,7 +755,7 @@ function GameView({
       : 0;
 
   useEffect(() => {
-    if (!sideShowReveal?.visibleToYou || !sideShowReveal?.endsAt) {
+    if (!sideShowReveal?.endsAt) {
       return;
     }
 
@@ -757,7 +763,7 @@ function GameView({
       setSideShowNow(Date.now());
     }, 250);
     return () => window.clearInterval(intervalId);
-  }, [sideShowReveal?.endsAt, sideShowReveal?.visibleToYou]);
+  }, [sideShowReveal?.endsAt]);
 
   const actionButtons = [
     actions.canLook
@@ -1073,18 +1079,32 @@ function GameView({
               <div className="winner-showcase-copy">
                 {winnerPlayer.handLabel || 'Winning hand revealed'} • Bank {formatExactChips(winnerPlayer.chips)}
               </div>
-              <div className="winner-showcase-cards">
-                {(winnerPlayer.cards || []).map((card, index) => (
-                  <div
-                    key={card.id}
-                    className="winner-card"
-                    style={{ animationDelay: `${index * 90}ms` }}
-                  >
-                    <span className={`winner-card-corner ${isRedSuit(card.suitSymbol) ? 'winner-card-corner-red' : ''}`}>{card.label}</span>
-                    <span className={`winner-card-rank ${isRedSuit(card.suitSymbol) ? 'winner-card-rank-red' : ''}`}>{card.label}</span>
-                  </div>
-                ))}
-              </div>
+              {finalShowdownPlayers.length > 1 ? (
+                <div className="showdown-hands">
+                  {finalShowdownPlayers.map((player) => (
+                    <div
+                      key={player.id}
+                      className={`showdown-hand ${player.id === winnerPlayer.id ? 'showdown-hand-winner' : ''}`}
+                    >
+                      <div className="showdown-hand-name">
+                        {player.id === me?.id ? 'You' : player.name}
+                      </div>
+                      <div className="showdown-hand-label">{player.handLabel || 'Hand revealed'}</div>
+                      <div className="winner-showcase-cards showdown-hand-cards">
+                        {(player.cards || []).map((card, index) => (
+                          <RevealedCard key={card.id} card={card} index={index} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="winner-showcase-cards">
+                  {(winnerPlayer.cards || []).map((card, index) => (
+                    <RevealedCard key={card.id} card={card} index={index} />
+                  ))}
+                </div>
+              )}
               {canStartNextRound ? (
                 <>
                   <div className="next-round-config">
@@ -1176,43 +1196,43 @@ function GameView({
           </>
         ) : null}
 
-        {sideShowReveal?.visibleToYou ? (
+        {sideShowReveal ? (
           <div className="side-show-reveal">
             <div className="side-show-reveal-kicker">Side Show</div>
             <div className="side-show-reveal-title">
-              {sideShowReveal.winnerName} wins the comparison
+              {sideShowReveal.winnerName} won the side show
             </div>
             <div className="side-show-reveal-copy">
-              Showing both hands for {sideShowCountdown}s before {sideShowReveal.loserName} packs.
+              {sideShowReveal.loserName} packs in {sideShowCountdown}s.
             </div>
 
-            <div className="side-show-reveal-grid">
-              <div className={`side-show-seat ${sideShowReveal.winnerId === sideShowReveal.requestorId ? 'side-show-seat-winner' : ''}`}>
-                <div className="side-show-seat-name">{sideShowReveal.requestorName}</div>
-                <div className="side-show-seat-hand">{sideShowReveal.requestorHandLabel}</div>
-                <div className="side-show-seat-cards">
-                  {sideShowReveal.requestorCards.map((card, index) => (
-                    <div key={card.id} className="winner-card" style={{ animationDelay: `${index * 80}ms` }}>
-                      <span className={`winner-card-corner ${isRedSuit(card.suitSymbol) ? 'winner-card-corner-red' : ''}`}>{card.label}</span>
-                      <span className={`winner-card-rank ${isRedSuit(card.suitSymbol) ? 'winner-card-rank-red' : ''}`}>{card.label}</span>
-                    </div>
-                  ))}
+            {sideShowReveal.canSeeHands ? (
+              <div className="side-show-reveal-grid">
+                <div className={`side-show-seat ${sideShowReveal.winnerId === sideShowReveal.requestorId ? 'side-show-seat-winner' : ''}`}>
+                  <div className="side-show-seat-name">{sideShowReveal.requestorName}</div>
+                  <div className="side-show-seat-hand">{sideShowReveal.requestorHandLabel}</div>
+                  <div className="side-show-seat-cards">
+                    {sideShowReveal.requestorCards.map((card, index) => (
+                      <RevealedCard key={card.id} card={card} index={index} delayStep={80} />
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className={`side-show-seat ${sideShowReveal.winnerId === sideShowReveal.targetId ? 'side-show-seat-winner' : ''}`}>
-                <div className="side-show-seat-name">{sideShowReveal.targetName}</div>
-                <div className="side-show-seat-hand">{sideShowReveal.targetHandLabel}</div>
-                <div className="side-show-seat-cards">
-                  {sideShowReveal.targetCards.map((card, index) => (
-                    <div key={card.id} className="winner-card" style={{ animationDelay: `${index * 80}ms` }}>
-                      <span className={`winner-card-corner ${isRedSuit(card.suitSymbol) ? 'winner-card-corner-red' : ''}`}>{card.label}</span>
-                      <span className={`winner-card-rank ${isRedSuit(card.suitSymbol) ? 'winner-card-rank-red' : ''}`}>{card.label}</span>
-                    </div>
-                  ))}
+                <div className={`side-show-seat ${sideShowReveal.winnerId === sideShowReveal.targetId ? 'side-show-seat-winner' : ''}`}>
+                  <div className="side-show-seat-name">{sideShowReveal.targetName}</div>
+                  <div className="side-show-seat-hand">{sideShowReveal.targetHandLabel}</div>
+                  <div className="side-show-seat-cards">
+                    {sideShowReveal.targetCards.map((card, index) => (
+                      <RevealedCard key={card.id} card={card} index={index} delayStep={80} />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="side-show-public-note">
+                Cards stay private to {sideShowReveal.requestorName} and {sideShowReveal.targetName}.
+              </div>
+            )}
           </div>
         ) : null}
 
@@ -1305,6 +1325,18 @@ function GameView({
         </div>
       </footer>
     </main>
+  );
+}
+
+function RevealedCard({ card, index, delayStep = 90 }) {
+  return (
+    <div
+      className="winner-card"
+      style={{ animationDelay: `${index * delayStep}ms` }}
+    >
+      <span className={`winner-card-corner ${isRedSuit(card.suitSymbol) ? 'winner-card-corner-red' : ''}`}>{card.label}</span>
+      <span className={`winner-card-rank ${isRedSuit(card.suitSymbol) ? 'winner-card-rank-red' : ''}`}>{card.label}</span>
+    </div>
   );
 }
 

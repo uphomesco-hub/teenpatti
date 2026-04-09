@@ -2636,6 +2636,51 @@ body.viewport-locked {
   flex-wrap: wrap;
 }
 
+.showdown-hands {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.showdown-hand {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.showdown-hand-winner {
+  border-color: rgba(233, 195, 73, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(233, 195, 73, 0.14);
+}
+
+.showdown-hand-name {
+  font-weight: 800;
+  color: rgba(229, 226, 225, 0.92);
+}
+
+.showdown-hand-label {
+  margin-top: 6px;
+  color: var(--lounge-gold);
+  font-size: 0.86rem;
+}
+
+.showdown-hand-cards {
+  margin-top: 14px;
+}
+
+.side-show-public-note {
+  margin: 16px auto 0;
+  max-width: 420px;
+  padding: 12px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(229, 226, 225, 0.68);
+  font-size: 0.82rem;
+}
+
 .next-round-config {
   margin-top: 18px;
   padding: 14px;
@@ -3015,6 +3060,10 @@ body.viewport-locked {
   }
 
   .side-show-reveal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .showdown-hands {
     grid-template-columns: 1fr;
   }
 
