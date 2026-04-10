@@ -3437,6 +3437,7 @@ body.viewport-locked {
     top: 10px;
     left: 10px;
     gap: 8px;
+    z-index: 12;
   }
 
   .dock-toggle {
@@ -3459,12 +3460,12 @@ body.viewport-locked {
 
   .table-stage-status {
     top: 10px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    grid-template-columns: 78px 158px;
+    left: 150px;
+    right: 10px;
+    transform: none;
+    grid-template-columns: 72px minmax(0, 1fr);
     width: auto;
-    max-width: calc(100% - 20px);
+    max-width: none;
   }
 
   .table-stage-status span {
@@ -3479,15 +3480,15 @@ body.viewport-locked {
   }
 
   .pot-core {
-    top: 20%;
-    width: 170px;
-    min-height: 108px;
-    padding: 12px 10px;
+    top: 24%;
+    width: 154px;
+    min-height: 96px;
+    padding: 10px 8px;
     border-radius: 18px;
   }
 
   .pot-core strong {
-    font-size: 2rem;
+    font-size: 1.7rem;
   }
 
   .pot-core span,
@@ -3536,6 +3537,11 @@ body.viewport-locked {
   .table-seat-turn-indicator,
   .table-seat-hand-label {
     letter-spacing: 0.04em;
+  }
+
+  .table-seat-token,
+  .table-seat-hand-label {
+    display: none;
   }
 
   .table-seat-meta-row {
@@ -3647,6 +3653,10 @@ body.viewport-locked {
     padding: 12px;
   }
 
+  .winner-toast {
+    display: none;
+  }
+
   .side-show-reveal {
     top: 53%;
     width: min(320px, calc(100% - 16px));
@@ -3747,12 +3757,12 @@ body.viewport-locked {
   }
 
   .table-stage-status {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(78vw, 220px);
+    left: 132px;
+    right: 8px;
+    transform: none;
+    width: auto;
     grid-template-columns: minmax(0, 1fr);
-    max-width: min(78vw, 220px);
+    max-width: none;
   }
 
   .table-stage-status span:first-child {
@@ -3761,6 +3771,7 @@ body.viewport-locked {
 
   .table-stage-status span:last-child {
     width: 100%;
+    font-size: clamp(0.48rem, 2vw, 0.62rem);
   }
 
   .pot-core {
