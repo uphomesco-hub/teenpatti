@@ -1,4 +1,4 @@
-import { createDeck, RANKS, SUITS } from './cards';
+import { createDeck, formatRank, RANKS, SUITS } from './cards';
 import { compareTeenPattiHands, evaluateBestTeenPattiHand } from './evaluator';
 import { buildConfigFromPreset, normalizeConfig } from './variants';
 
@@ -292,6 +292,46 @@ function evaluateWinner(room, leftPlayer, rightPlayer) {
   };
 }
 
+function describeComparisonReason(comparison) {
+  if (!comparison?.leftScore || !comparison?.rightScore) {
+    return '';
+  }
+
+  const leftWins = comparison.winner >= 0;
+  const winnerScore = leftWins ? comparison.leftScore : comparison.rightScore;
+  const loserScore = leftWins ? comparison.rightScore : comparison.leftScore;
+
+  if (winnerScore.category !== loserScore.category) {
+    return `${winnerScore.label} beats ${loserScore.label}.`;
+  }
+
+  if (winnerScore.category === 'highCard' || winnerScore.category === 'color') {
+    const winnerVector = winnerScore.tiebreaker || [];
+    const loserVector = loserScore.tiebreaker || [];
+    const diffIndex = winnerVector.findIndex((value, index) => value !== (loserVector[index] || 0));
+    if (diffIndex >= 0) {
+      const ordinal = diffIndex === 0 ? 'highest' : diffIndex === 1 ? 'second' : 'third';
+      return `Both had ${formatRank(winnerVector[0] || 0)} high; ${formatRank(winnerVector[diffIndex])} ${ordinal} card won.`;
+    }
+  }
+
+  if (winnerScore.category === 'pair') {
+    const pairRank = winnerScore.tiebreaker?.[0];
+    const kicker = winnerScore.tiebreaker?.[1];
+    return `Both had a pair; ${formatRank(pairRank)} pair with ${formatRank(kicker)} kicker won.`;
+  }
+
+  if (winnerScore.category === 'trail') {
+    return `${formatRank(winnerScore.tiebreaker?.[0] || 0)} trail won.`;
+  }
+
+  if (winnerScore.category === 'sequence' || winnerScore.category === 'pureSequence') {
+    return `${winnerScore.label} won on higher sequence rank.`;
+  }
+
+  return `${winnerScore.label} won the comparison.`;
+}
+
 function finishRound(room, winnerPlayer, reason) {
   room.phase = 'finished';
   room.winnerId = winnerPlayer.id;
@@ -578,7 +618,13 @@ export function handleTurnTimeout(room, now = Date.now()) {
   const player = getPlayer(room, room.round.actionPlayerId);
   const fromSeat = player?.seat ?? null;
   if (player) {
-    pushHistory(room, `${player.name}'s turn timed out.`);
+    const activeBeforePack = getActivePlayers(room);
+    if (activeBeforePack.length === 2) {
+      room.round.showdownPlayerIds = activeBeforePack.map((entry) => entry.id);
+    }
+
+    player.status = 'packed';
+    pushHistory(room, `${player.name} timed out and packed.`);
   }
 
   advanceTurn(room, room.round.actionPlayerId, fromSeat);
@@ -926,6 +972,7 @@ function handlePromptAnswer(room, player, payload) {
     targetSeat: target.seat,
     winnerId: result.winnerPlayer.id,
     loserId: result.loserPlayer.id,
+    reason: describeComparisonReason(result.comparison),
     endsAt: Date.now() + 10_000,
   };
   pushHistory(room, `${target.name} accepted the side show. Showing the side-show result for 10 seconds.`);
@@ -1175,12 +1222,13 @@ function serializeSideShowReveal(room, playerId) {
     targetName: target?.name || 'Player',
     winnerName: winner?.name || 'Player',
     loserName: loser?.name || 'Player',
+    reason: room.sideShowReveal.reason || '',
     requestorHandLabel: viewerIsParticipant ? requestorHand?.label || '' : '',
     targetHandLabel: viewerIsParticipant ? targetHand?.label || '' : '',
-    requestorCards: viewerIsParticipant ? requestor?.hand.map((cardId) => serializeCard(room, cardId)).filter(Boolean) || [] : [],
-    targetCards: viewerIsParticipant ? target?.hand.map((cardId) => serializeCard(room, cardId)).filter(Boolean) || [] : [],
+    requestorCards: viewerIsParticipant ? requestorHand?.cards?.map((card) => serializeCard(room, card.id)).filter(Boolean) || [] : [],
+    targetCards: viewerIsParticipant ? targetHand?.cards?.map((card) => serializeCard(room, card.id)).filter(Boolean) || [] : [],
     endsAt: room.sideShowReveal.endsAt,
-    visibleToYou: true,
+    visibleToYou: viewerIsParticipant,
     canSeeHands: viewerIsParticipant,
   };
 }

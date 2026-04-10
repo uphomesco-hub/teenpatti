@@ -1696,6 +1696,10 @@ body.viewport-locked {
   box-shadow: inset 2px 0 0 var(--lounge-gold);
 }
 
+.guest-row-you {
+  box-shadow: inset 2px 0 0 var(--lounge-gold);
+}
+
 .guest-copy {
   flex: 1;
 }
@@ -1791,24 +1795,24 @@ body.viewport-locked {
   --table-width: min(76vw, 980px);
   --table-height: min(72vh, 700px);
   --seat-width: 112px;
-  --seat-avatar-size: 72px;
-  --seat-card-width: 18px;
-  --seat-card-height: 26px;
+  --seat-avatar-size: 60px;
+  --seat-card-width: 22px;
+  --seat-card-height: 32px;
   --seat-font-size: 0.7rem;
-  --hero-card-width: 102px;
-  --hero-card-height: 146px;
+  --hero-card-width: 112px;
+  --hero-card-height: 156px;
 }
 
 .game-table-shell-crowded {
   --table-width: min(72vw, 900px);
   --table-height: min(68vh, 630px);
   --seat-width: 98px;
-  --seat-avatar-size: 60px;
-  --seat-card-width: 16px;
-  --seat-card-height: 24px;
+  --seat-avatar-size: 50px;
+  --seat-card-width: 19px;
+  --seat-card-height: 28px;
   --seat-font-size: 0.62rem;
-  --hero-card-width: 94px;
-  --hero-card-height: 136px;
+  --hero-card-width: 104px;
+  --hero-card-height: 146px;
 }
 
 .game-table-glow {
@@ -2377,6 +2381,27 @@ body.viewport-locked {
   letter-spacing: 0.09em;
 }
 
+.table-seat-ultra-compact {
+  width: calc(var(--seat-width) - 10px);
+}
+
+.table-seat-ultra-compact .table-seat-avatar {
+  width: calc(var(--seat-avatar-size) - 12px);
+  height: calc(var(--seat-avatar-size) - 12px);
+  font-size: clamp(0.78rem, 1.2vw, 1rem);
+}
+
+.table-seat-ultra-compact .table-seat-name,
+.table-seat-ultra-compact .table-seat-meta,
+.table-seat-ultra-compact .table-seat-token,
+.table-seat-ultra-compact .table-seat-state,
+.table-seat-ultra-compact .table-seat-last-bet,
+.table-seat-ultra-compact .table-seat-turn-indicator,
+.table-seat-ultra-compact .table-seat-hand-label {
+  font-size: calc(var(--seat-font-size) - 0.07rem);
+  letter-spacing: 0.04em;
+}
+
 .seat-action-token {
   position: absolute;
   top: -10px;
@@ -2631,9 +2656,9 @@ body.viewport-locked {
   top: 50%;
   z-index: 11;
   transform: translate(-50%, -50%);
-  width: min(340px, calc(100% - 40px));
-  padding: 10px 16px;
-  border-radius: 999px;
+  width: min(420px, calc(100% - 40px));
+  padding: 12px 16px;
+  border-radius: 16px;
   background: rgba(10, 10, 10, 0.58);
   border: 1px solid rgba(233, 195, 73, 0.16);
   backdrop-filter: blur(10px);
@@ -2661,6 +2686,32 @@ body.viewport-locked {
   margin-top: 2px;
   color: rgba(229, 226, 225, 0.72);
   font-size: 0.72rem;
+}
+
+.side-show-reveal-cards {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.side-show-reveal-hand {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.side-show-reveal-hand strong {
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lounge-gold);
+}
+
+.side-show-reveal-hand span {
+  font-size: 0.76rem;
+  color: rgba(229, 226, 225, 0.82);
 }
 
 .winner-showcase-kicker {
@@ -2994,12 +3045,12 @@ body.viewport-locked {
     --table-width: min(72vw, 860px);
     --table-height: min(58vh, 470px);
     --seat-width: 86px;
-    --seat-avatar-size: 48px;
-    --seat-card-width: 13px;
-    --seat-card-height: 19px;
+    --seat-avatar-size: 42px;
+    --seat-card-width: 15px;
+    --seat-card-height: 22px;
     --seat-font-size: 0.56rem;
-    --hero-card-width: 70px;
-    --hero-card-height: 102px;
+    --hero-card-width: 78px;
+    --hero-card-height: 112px;
   }
 
   .game-table-oval {
@@ -3317,12 +3368,12 @@ body.viewport-locked {
     --table-width: min(94vw, 390px);
     --table-height: min(54vh, 470px);
     --seat-width: 64px;
-    --seat-avatar-size: 38px;
-    --seat-card-width: 11px;
-    --seat-card-height: 16px;
+    --seat-avatar-size: 34px;
+    --seat-card-width: 12px;
+    --seat-card-height: 18px;
     --seat-font-size: 0.46rem;
-    --hero-card-width: 54px;
-    --hero-card-height: 82px;
+    --hero-card-width: 58px;
+    --hero-card-height: 88px;
   }
 
   .game-table-glow {
@@ -3625,7 +3676,7 @@ body.viewport-locked {
     --table-width: calc(100vw - 12px);
     --table-height: min(50vh, 410px);
     --seat-width: 56px;
-    --seat-avatar-size: 34px;
+    --seat-avatar-size: 30px;
     --seat-card-width: 9px;
     --seat-card-height: 14px;
   }

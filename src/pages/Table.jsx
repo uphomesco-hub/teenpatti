@@ -15,25 +15,25 @@ import { emitGameCommand, socket } from '../lib/transport';
 const TABLE_POSITIONS = [
   { bottom: '22%', left: '12%' },
   { top: '48%', left: '8%' },
-  { top: '28%', left: '9%' },
-  { top: '10%', left: '18%' },
-  { top: '7%', left: '50%', transform: 'translateX(-50%)' },
-  { top: '10%', right: '18%' },
-  { top: '28%', right: '9%' },
+  { top: '30%', left: '9%' },
+  { top: '12%', left: '16%' },
+  { top: '12%', right: '16%' },
+  { top: '30%', right: '9%' },
   { top: '48%', right: '8%' },
   { bottom: '22%', right: '12%' },
   { bottom: '14%', right: '25%' },
+  { bottom: '14%', left: '25%' },
 ];
 
 const TABLE_LAYOUTS = {
-  1: [{ top: '9%', left: '50%', transform: 'translateX(-50%)' }],
+  1: [{ top: '24%', left: '12%' }],
   2: [
     { top: '24%', left: '12%' },
     { top: '24%', right: '12%' },
   ],
   3: [
     { top: '32%', left: '10%' },
-    { top: '9%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '12%', left: '16%' },
     { top: '32%', right: '10%' },
   ],
   4: [
@@ -45,7 +45,7 @@ const TABLE_LAYOUTS = {
   5: [
     { bottom: '22%', left: '12%' },
     { top: '34%', left: '8%' },
-    { top: '9%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '12%', left: '16%' },
     { top: '34%', right: '8%' },
     { bottom: '22%', right: '12%' },
   ],
@@ -61,7 +61,7 @@ const TABLE_LAYOUTS = {
     { bottom: '22%', left: '12%' },
     { top: '44%', left: '8%' },
     { top: '25%', left: '9%' },
-    { top: '8%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '12%', left: '16%' },
     { top: '25%', right: '9%' },
     { top: '44%', right: '8%' },
     { bottom: '22%', right: '12%' },
@@ -81,23 +81,23 @@ const TABLE_LAYOUTS = {
     { top: '48%', left: '8%' },
     { top: '28%', left: '9%' },
     { top: '10%', left: '18%' },
-    { top: '7%', left: '50%', transform: 'translateX(-50%)' },
     { top: '10%', right: '18%' },
     { top: '28%', right: '9%' },
     { top: '48%', right: '8%' },
     { bottom: '22%', right: '12%' },
+    { bottom: '14%', right: '25%' },
   ],
   10: [
     { bottom: '22%', left: '12%' },
     { top: '48%', left: '8%' },
     { top: '28%', left: '9%' },
     { top: '10%', left: '18%' },
-    { top: '7%', left: '50%', transform: 'translateX(-50%)' },
     { top: '10%', right: '18%' },
     { top: '28%', right: '9%' },
     { top: '48%', right: '8%' },
     { bottom: '22%', right: '12%' },
     { bottom: '14%', right: '25%' },
+    { bottom: '14%', left: '25%' },
   ],
 };
 
@@ -106,23 +106,23 @@ const MOBILE_TABLE_POSITIONS = [
   { top: '46%', left: '1%' },
   { top: '32%', left: '1%' },
   { top: '18%', left: '3%' },
-  { top: '12%', left: '50%', transform: 'translateX(-50%)' },
   { top: '18%', right: '3%' },
   { top: '32%', right: '1%' },
   { top: '46%', right: '1%' },
   { bottom: '30%', right: '3%' },
   { bottom: '18%', right: '10%' },
+  { bottom: '18%', left: '10%' },
 ];
 
 const MOBILE_TABLE_LAYOUTS = {
-  1: [{ top: '13%', left: '50%', transform: 'translateX(-50%)' }],
+  1: [{ top: '28%', left: '3%' }],
   2: [
     { top: '28%', left: '3%' },
     { top: '28%', right: '3%' },
   ],
   3: [
     { top: '34%', left: '1%' },
-    { top: '13%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '18%', left: '3%' },
     { top: '34%', right: '1%' },
   ],
   4: [
@@ -134,7 +134,7 @@ const MOBILE_TABLE_LAYOUTS = {
   5: [
     { bottom: '30%', left: '3%' },
     { top: '37%', left: '1%' },
-    { top: '13%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '18%', left: '3%' },
     { top: '37%', right: '1%' },
     { bottom: '30%', right: '3%' },
   ],
@@ -150,7 +150,7 @@ const MOBILE_TABLE_LAYOUTS = {
     { bottom: '30%', left: '3%' },
     { top: '46%', left: '1%' },
     { top: '30%', left: '1%' },
-    { top: '13%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '18%', left: '3%' },
     { top: '30%', right: '1%' },
     { top: '46%', right: '1%' },
     { bottom: '30%', right: '3%' },
@@ -170,23 +170,23 @@ const MOBILE_TABLE_LAYOUTS = {
     { top: '46%', left: '1%' },
     { top: '32%', left: '1%' },
     { top: '18%', left: '3%' },
-    { top: '12%', left: '50%', transform: 'translateX(-50%)' },
     { top: '18%', right: '3%' },
     { top: '32%', right: '1%' },
     { top: '46%', right: '1%' },
     { bottom: '30%', right: '3%' },
+    { bottom: '18%', right: '10%' },
   ],
   10: [
     { bottom: '30%', left: '3%' },
     { top: '46%', left: '1%' },
     { top: '32%', left: '1%' },
     { top: '18%', left: '3%' },
-    { top: '12%', left: '50%', transform: 'translateX(-50%)' },
     { top: '18%', right: '3%' },
     { top: '32%', right: '1%' },
     { top: '46%', right: '1%' },
     { bottom: '30%', right: '3%' },
     { bottom: '18%', right: '10%' },
+    { bottom: '18%', left: '10%' },
   ],
 };
 
@@ -671,13 +671,19 @@ function LobbyView({
           <div className="guest-list">
             {roomState.players.map((player) => {
               const displayedChips = canEdit ? chipDrafts[player.id] || String(player.chips) : String(player.chips);
+              const isHost = player.id === roomState.hostPlayerId;
+              const isYou = player.id === roomState.you?.playerId;
               return (
-                <div key={player.id} className={`guest-row ${player.id === roomState.hostPlayerId ? 'guest-row-host' : ''}`}>
+                <div
+                  key={player.id}
+                  className={`guest-row ${isHost ? 'guest-row-host' : ''} ${isYou ? 'guest-row-you' : ''}`}
+                >
                   <div className="guest-avatar">{initialsFor(player.name)}</div>
                   <div className="guest-copy">
                     <div className="guest-name">
                       {player.name}
-                      {player.id === roomState.hostPlayerId ? <span>(Host)</span> : null}
+                      {isHost ? <span>👑 Host</span> : null}
+                      {isYou ? <span>(You)</span> : null}
                     </div>
                     <div className="guest-meta">
                       {player.connected ? 'Connected' : 'Disconnected'} • {formatExactChips(displayedChips)} chips
@@ -751,7 +757,8 @@ function GameView({
   const canAct = Boolean(me?.id === activeTurnPlayer?.id);
   const actions = roomState?.you?.availableActions || {};
   const canSeeOwnCards = Boolean(roomState?.you?.handVisible);
-  const crowdedTable = otherPlayers.length >= 5;
+  const crowdedTable = otherPlayers.length >= 4;
+  const ultraCrowdedTable = otherPlayers.length >= 7;
   const canStartNextRound = Boolean(isFinished && roomState?.you?.isHost);
   const draftPreset = detectPreset(configDraft);
   const activeJokerText = describeActiveJokers(roomState);
@@ -768,6 +775,10 @@ function GameView({
   const latestEvent = roomState?.history?.[roomState.history.length - 1] || null;
   const parsedEvent = useMemo(() => parseTableEvent(latestEvent, roomState.players), [latestEvent, roomState.players]);
   const sideShowReveal = roomState?.sideShowReveal || null;
+  const sideShowRevealStyle = useMemo(
+    () => getSideShowRevealStyle(sideShowReveal, me, otherPlayers, seatPositions),
+    [sideShowReveal, me, otherPlayers, seatPositions],
+  );
   const [sideShowNow, setSideShowNow] = useState(0);
   const [turnNow, setTurnNow] = useState(0);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
@@ -1039,7 +1050,7 @@ function GameView({
         {otherPlayers.map((player, index) => (
           <div
             key={player.id}
-            className={`table-seat ${isTopCenterSeat(seatPositions[index]) ? 'table-seat-top' : ''} ${crowdedTable ? 'table-seat-compact' : ''} ${player.id === activeTurnPlayer?.id ? 'table-seat-active' : ''} ${player.status === 'packed' ? 'table-seat-folded' : ''} ${player.id === winnerPlayer?.id ? 'table-seat-winner' : ''}`}
+            className={`table-seat ${crowdedTable ? 'table-seat-compact' : ''} ${ultraCrowdedTable ? 'table-seat-ultra-compact' : ''} ${player.id === activeTurnPlayer?.id ? 'table-seat-active' : ''} ${player.status === 'packed' ? 'table-seat-folded' : ''} ${player.id === winnerPlayer?.id ? 'table-seat-winner' : ''}`}
             style={seatPositions[index] || TABLE_POSITIONS[index] || TABLE_POSITIONS[0]}
           >
             <div className="table-seat-avatar">
@@ -1183,14 +1194,33 @@ function GameView({
           </div>
         ) : null}
 
-        {sideShowReveal ? (
-          <div className="side-show-reveal">
+        {sideShowReveal?.visibleToYou ? (
+          <div className="side-show-reveal" style={sideShowRevealStyle}>
             <div className="side-show-reveal-kicker">Side Show</div>
             <div className="side-show-reveal-title">
               {sideShowReveal.winnerName} won the side show
             </div>
             <div className="side-show-reveal-copy">
               {sideShowReveal.loserName} packs in {sideShowCountdown}s.
+            </div>
+            {sideShowReveal.reason ? (
+              <div className="side-show-reveal-copy">
+                {sideShowReveal.reason}
+              </div>
+            ) : null}
+            <div className="side-show-reveal-cards">
+              <div className="side-show-reveal-hand">
+                <strong>{sideShowReveal.requestorName}</strong>
+                <span>
+                  {sideShowReveal.requestorCards.map((card) => card.label).join(' ') || sideShowReveal.requestorHandLabel}
+                </span>
+              </div>
+              <div className="side-show-reveal-hand">
+                <strong>{sideShowReveal.targetName}</strong>
+                <span>
+                  {sideShowReveal.targetCards.map((card) => card.label).join(' ') || sideShowReveal.targetHandLabel}
+                </span>
+              </div>
             </div>
           </div>
         ) : null}
@@ -1768,10 +1798,6 @@ function getSeatPositions(count, isCompactMobile = false) {
   return TABLE_LAYOUTS[count] || TABLE_POSITIONS;
 }
 
-function isTopCenterSeat(position) {
-  return Boolean(position?.top) && !position?.bottom && (position?.left === '18%' || position?.right === '18%');
-}
-
 function clampNumber(value, min, max) {
   if (!Number.isFinite(value)) {
     return min;
@@ -1799,6 +1825,55 @@ function getTurnProgress(round, now) {
 
   const remaining = round.turnEndsAt - now;
   return clampNumber(remaining / round.turnDurationMs, 0, 1);
+}
+
+function getSideShowRevealStyle(sideShowReveal, me, otherPlayers, seatPositions) {
+  if (!sideShowReveal) {
+    return undefined;
+  }
+
+  const requestorPoint = getSeatPoint(sideShowReveal.requestorId, me, otherPlayers, seatPositions);
+  const targetPoint = getSeatPoint(sideShowReveal.targetId, me, otherPlayers, seatPositions);
+  const centerX = (requestorPoint.x + targetPoint.x) / 2;
+  const centerY = (requestorPoint.y + targetPoint.y) / 2;
+
+  return {
+    left: `${centerX}%`,
+    top: `${centerY}%`,
+    transform: 'translate(-50%, -50%)',
+  };
+}
+
+function getSeatPoint(playerId, me, otherPlayers, seatPositions) {
+  if (playerId === me?.id) {
+    return { x: 50, y: 84 };
+  }
+
+  const index = otherPlayers.findIndex((player) => player.id === playerId);
+  if (index === -1) {
+    return { x: 50, y: 50 };
+  }
+
+  const position = seatPositions[index] || TABLE_POSITIONS[index] || TABLE_POSITIONS[0];
+  return positionToPercentPoint(position);
+}
+
+function positionToPercentPoint(position = {}) {
+  const left = parsePercent(position.left);
+  const right = parsePercent(position.right);
+  const top = parsePercent(position.top);
+  const bottom = parsePercent(position.bottom);
+
+  const x = Number.isFinite(left) ? left : Number.isFinite(right) ? 100 - right : 50;
+  const y = Number.isFinite(top) ? top : Number.isFinite(bottom) ? 100 - bottom : 50;
+  return { x, y };
+}
+
+function parsePercent(value) {
+  if (typeof value !== 'string' || !value.endsWith('%')) {
+    return Number.NaN;
+  }
+  return Number(value.slice(0, -1));
 }
 
 function playerStatusIcon(player) {
