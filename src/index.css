@@ -1902,6 +1902,7 @@ body.viewport-locked {
 
 .game-flyout-setup {
   width: min(520px, calc(100vw - 48px));
+  z-index: 220;
 }
 
 .hud-card {
