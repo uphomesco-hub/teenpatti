@@ -3297,7 +3297,8 @@ body.viewport-locked {
   .lobby-main {
     padding: 12px;
     gap: 12px;
-    height: 100%;
+    height: auto;
+    min-height: 100%;
     overflow: auto;
   }
 
@@ -3307,9 +3308,10 @@ body.viewport-locked {
   }
 
   .lobby-right {
-    height: calc(100dvh - 24px);
-    min-height: 520px;
-    overflow: hidden;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    grid-template-rows: auto minmax(220px, auto) auto auto auto;
   }
 
   .lobby-heading h1 {
@@ -3335,7 +3337,7 @@ body.viewport-locked {
   }
 
   .guest-list {
-    max-height: none;
+    max-height: 48dvh;
     overflow: auto;
   }
 
