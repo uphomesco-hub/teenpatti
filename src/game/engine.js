@@ -594,13 +594,16 @@ export function updateConfig(room, playerId, payload) {
     return { error: 'Only the host can edit the table rules.' };
   }
 
-  room.config = normalizeConfig({
+  const previousStartingChips = room.config.startingChips;
+  const nextConfig = normalizeConfig({
     ...room.config,
     ...payload,
   });
+  const startingChipsChanged = nextConfig.startingChips !== previousStartingChips;
+  room.config = nextConfig;
 
-  for (const player of room.players) {
-    if (player.status === 'waiting') {
+  if (startingChipsChanged) {
+    for (const player of room.players) {
       player.chips = room.config.startingChips;
     }
   }

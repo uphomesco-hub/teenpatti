@@ -327,6 +327,18 @@ function Table() {
     });
   }
 
+  function changeStartingChipsDraft(value) {
+    const nextConfig = normalizeConfig({ ...configDraft, startingChips: Number(value) });
+    setConfigDraft(nextConfig);
+    setChipDrafts((current) => {
+      const next = { ...current };
+      for (const player of roomState?.players || []) {
+        next[player.id] = String(nextConfig.startingChips);
+      }
+      return next;
+    });
+  }
+
   function kickPlayer(targetPlayerId) {
     socket.emit('kick_player', {
       roomId: normalizedRoomId,
@@ -452,6 +464,7 @@ function Table() {
           chipDrafts={chipDrafts}
           currentPreset={currentPreset}
           onSetConfigDraft={setConfigDraft}
+          onChangeStartingChips={changeStartingChipsDraft}
           onChangeChipDraft={(playerId, value) =>
             setChipDrafts((current) => ({ ...current, [playerId]: value }))
           }
@@ -481,6 +494,7 @@ function Table() {
           onSetCardReveal={setCardReveal}
           onKickPlayer={kickPlayer}
           onSetConfigDraft={setConfigDraft}
+          onChangeStartingChips={changeStartingChipsDraft}
           onToggleJokerRank={toggleJokerRank}
           onToggleJokerSuit={toggleJokerSuit}
           onSaveRules={saveRules}
@@ -499,6 +513,7 @@ function LobbyView({
   presets,
   chipDrafts,
   onSetConfigDraft,
+  onChangeStartingChips,
   onChangeChipDraft,
   onToggleJokerRank,
   onToggleJokerSuit,
@@ -560,9 +575,7 @@ function LobbyView({
                     className="lounge-input"
                     type="number"
                     value={configDraft.startingChips}
-                    onChange={(event) =>
-                      onSetConfigDraft(normalizeConfig({ ...configDraft, startingChips: Number(event.target.value) }))
-                    }
+                    onChange={(event) => onChangeStartingChips(event.target.value)}
                   />
                 </label>
 
@@ -656,33 +669,38 @@ function LobbyView({
           </div>
 
           <div className="guest-list">
-            {roomState.players.map((player) => (
-              <div key={player.id} className={`guest-row ${player.id === roomState.hostPlayerId ? 'guest-row-host' : ''}`}>
-                <div className="guest-avatar">{initialsFor(player.name)}</div>
-                <div className="guest-copy">
-                  <div className="guest-name">
-                    {player.name}
-                    {player.id === roomState.hostPlayerId ? <span>(Host)</span> : null}
+            {roomState.players.map((player) => {
+              const displayedChips = canEdit ? chipDrafts[player.id] || String(player.chips) : String(player.chips);
+              return (
+                <div key={player.id} className={`guest-row ${player.id === roomState.hostPlayerId ? 'guest-row-host' : ''}`}>
+                  <div className="guest-avatar">{initialsFor(player.name)}</div>
+                  <div className="guest-copy">
+                    <div className="guest-name">
+                      {player.name}
+                      {player.id === roomState.hostPlayerId ? <span>(Host)</span> : null}
+                    </div>
+                    <div className="guest-meta">
+                      {player.connected ? 'Connected' : 'Disconnected'} • {formatExactChips(displayedChips)} chips
+                    </div>
                   </div>
-                  <div className="guest-meta">{player.connected ? 'Connected' : 'Disconnected'} • {player.chips} chips</div>
+                  {canEdit ? (
+                    <div className="guest-stack-editor">
+                      <input
+                        className="lounge-input compact-input"
+                        type="number"
+                        value={displayedChips}
+                        onChange={(event) => onChangeChipDraft(player.id, event.target.value)}
+                      />
+                      <button className="lounge-cta lounge-cta-ghost" onClick={() => onUpdatePlayerStack(player.id)}>
+                        Set
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="guest-chip">{formatExactChips(displayedChips)}</div>
+                  )}
                 </div>
-                {canEdit ? (
-                  <div className="guest-stack-editor">
-                    <input
-                      className="lounge-input compact-input"
-                      type="number"
-                      value={chipDrafts[player.id] || ''}
-                      onChange={(event) => onChangeChipDraft(player.id, event.target.value)}
-                    />
-                    <button className="lounge-cta lounge-cta-ghost" onClick={() => onUpdatePlayerStack(player.id)}>
-                      Set
-                    </button>
-                  </div>
-                ) : (
-                  <div className="guest-chip">{player.chips}</div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {canEdit ? (
@@ -722,6 +740,7 @@ function GameView({
   onSetCardReveal,
   onKickPlayer,
   onSetConfigDraft,
+  onChangeStartingChips,
   onToggleJokerRank,
   onToggleJokerSuit,
   onSaveRules,
@@ -963,6 +982,7 @@ function GameView({
               presets={presets}
               draftPreset={draftPreset}
               onSetConfigDraft={onSetConfigDraft}
+              onChangeStartingChips={onChangeStartingChips}
               onToggleJokerRank={onToggleJokerRank}
               onToggleJokerSuit={onToggleJokerSuit}
               onSaveRules={onSaveRules}
@@ -1321,6 +1341,7 @@ function NextRoundSettings({
   presets,
   draftPreset,
   onSetConfigDraft,
+  onChangeStartingChips,
   onToggleJokerRank,
   onToggleJokerSuit,
   onSaveRules,
@@ -1358,6 +1379,16 @@ function NextRoundSettings({
             onChange={(event) =>
               onSetConfigDraft(normalizeConfig({ ...configDraft, bootAmount: Number(event.target.value) }))
             }
+          />
+        </label>
+
+        <label className="lounge-field next-round-field">
+          <span>Starting Chips</span>
+          <input
+            className="lounge-input"
+            type="number"
+            value={configDraft.startingChips}
+            onChange={(event) => onChangeStartingChips(event.target.value)}
           />
         </label>
 

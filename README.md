@@ -51,6 +51,21 @@ npm run dev
 
 Open the Vite URL from the terminal.
 
+## TURN relay configuration
+
+The game uses PeerJS/WebRTC. STUN is enabled by default, but stricter networks can still fail to connect unless a TURN
+relay is configured. Add these values in `.env.local` for local development, and add the same `VITE_` variables in the
+deployment environment:
+
+```bash
+VITE_TURN_URLS=turn:turn.example.com:3478,turns:turn.example.com:5349
+VITE_TURN_USERNAME=your-turn-username
+VITE_TURN_CREDENTIAL=your-turn-password
+```
+
+Use credentials from a real TURN provider or a self-hosted `coturn` server. Without these values, the app falls back to
+the existing STUN-only setup.
+
 ## Verification
 
 ```bash

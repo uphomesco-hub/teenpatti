@@ -1646,10 +1646,11 @@ body.viewport-locked {
 
 .lobby-right {
   display: grid;
-  grid-template-rows: auto auto auto auto auto;
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
   gap: 12px;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .lobby-guest-header {
@@ -1676,8 +1677,10 @@ body.viewport-locked {
   display: grid;
   gap: 8px;
   align-content: start;
-  max-height: min(30vh, 220px);
+  min-height: 0;
+  max-height: none;
   overflow: auto;
+  padding-right: 4px;
 }
 
 .guest-row {
@@ -2961,6 +2964,11 @@ body.viewport-locked {
     overflow: auto;
   }
 
+  .lobby-right {
+    height: min(720px, calc(100dvh - 96px));
+    min-height: 420px;
+  }
+
   .lounge-topnav {
     display: none;
   }
@@ -3239,13 +3247,18 @@ body.viewport-locked {
     padding: 12px;
     gap: 12px;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
   }
 
-  .lobby-left,
-  .lobby-right {
+  .lobby-left {
     min-height: 0;
-    overflow: auto;
+    overflow: visible;
+  }
+
+  .lobby-right {
+    height: calc(100dvh - 24px);
+    min-height: 520px;
+    overflow: hidden;
   }
 
   .lobby-heading h1 {

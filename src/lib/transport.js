@@ -17,9 +17,46 @@ import {
 
 const SIGNALING_ERROR_MESSAGE = 'Could not connect to the room host. Check the room code or host tab.';
 const HOST_LEFT_MESSAGE = 'The host left the room. In peer-hosted mode the table closes with the host.';
+const DEFAULT_ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+];
 
 function randomRoomCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function parseList(value) {
+  return String(value || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function buildIceServers() {
+  const turnUrls = parseList(import.meta.env.VITE_TURN_URLS || import.meta.env.VITE_TURN_URL);
+  const turnUsername = String(import.meta.env.VITE_TURN_USERNAME || '').trim();
+  const turnCredential = String(import.meta.env.VITE_TURN_CREDENTIAL || '').trim();
+
+  if (!turnUrls.length) {
+    return DEFAULT_ICE_SERVERS;
+  }
+
+  if (!turnUsername || !turnCredential) {
+    console.warn('TURN server URL is configured, but username or credential is missing. Falling back to STUN only.');
+    return DEFAULT_ICE_SERVERS;
+  }
+
+  return [
+    ...DEFAULT_ICE_SERVERS,
+    {
+      urls: turnUrls.length === 1 ? turnUrls[0] : turnUrls,
+      username: turnUsername,
+      credential: turnCredential,
+    },
+  ];
 }
 
 export function getTransportErrorMessage(error) {
@@ -57,12 +94,7 @@ class PeerSocket {
     this.sideShowTimeout = null;
     this.turnTimeout = null;
     this.tearingDown = false;
-    this.iceServers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' },
-    ];
+    this.iceServers = buildIceServers();
   }
 
   on(event, handler) {
