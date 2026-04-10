@@ -5,10 +5,12 @@ import {
   reconnectRoom as reconnectGameRoom,
   disconnectPlayer,
   leaveRoom as leaveGameRoom,
+  kickPlayer as kickGamePlayer,
   updateConfig as updateRoomConfig,
   setPlayerChips as updatePlayerChips,
   startRound as startGameRound,
   handleCommand,
+  handleTurnTimeout,
   finalizeSideShowReveal,
   serializeRoomForPlayer,
 } from '../game/engine';
@@ -53,6 +55,7 @@ class PeerSocket {
     this.localPlayerToken = '';
     this.joinTimeout = null;
     this.sideShowTimeout = null;
+    this.turnTimeout = null;
     this.tearingDown = false;
     this.iceServers = [
       { urls: 'stun:stun.l.google.com:19302' },
@@ -98,6 +101,9 @@ class PeerSocket {
         return;
       case 'set_player_chips':
         this.setPlayerChips(payload.roomId, payload.playerToken, payload.targetPlayerId, payload.chips);
+        return;
+      case 'kick_player':
+        this.kickPlayer(payload.roomId, payload.playerToken, payload.targetPlayerId);
         return;
       case 'start_round':
         this.startRound(payload.roomId, payload.playerToken, payload.config);
@@ -194,6 +200,33 @@ class PeerSocket {
     }
 
     this.sendToHost('set_player_chips', { roomId, playerToken, targetPlayerId, chips });
+  }
+
+  kickPlayer(roomId, playerToken, targetPlayerId) {
+    if (this.mode === 'host' && this.room?.id === roomId) {
+      const target = this.room.players.find((player) => player.id === targetPlayerId);
+      const targetSocketId = target?.socketId;
+      const result = kickGamePlayer(this.room, this.localPlayerId, targetPlayerId);
+      if (result.error) {
+        this.dispatch('game_error', { message: result.error });
+        return;
+      }
+
+      if (targetSocketId && targetSocketId !== this.peer?.id) {
+        this.sendEventToPeer(targetSocketId, 'kicked', { message: 'You were removed by the host.' });
+        this.connections.get(targetSocketId)?.close();
+        this.connections.delete(targetSocketId);
+        this.peerIndex.delete(targetSocketId);
+      }
+
+      if (!this.room.sideShowReveal) {
+        this.clearSideShowTimeout();
+      }
+      this.broadcastRoom();
+      return;
+    }
+
+    this.sendToHost('kick_player', { roomId, playerToken, targetPlayerId });
   }
 
   startRound(roomId, playerToken, config) {
@@ -354,6 +387,9 @@ class PeerSocket {
       case 'set_player_chips':
         this.handleHostSetPlayerChips(peerId, message.payload);
         return;
+      case 'kick_player':
+        this.handleHostKickPlayer(peerId, message.payload);
+        return;
       case 'start_round':
         this.handleHostStartRound(peerId, message.payload);
         return;
@@ -412,6 +448,9 @@ class PeerSocket {
       return;
     }
 
+    if (!this.room.sideShowReveal) {
+      this.clearSideShowTimeout();
+    }
     this.broadcastRoom();
   }
 
@@ -444,6 +483,34 @@ class PeerSocket {
       return;
     }
 
+    this.broadcastRoom();
+  }
+
+  handleHostKickPlayer(peerId, payload) {
+    const playerId = this.resolvePlayerId(peerId, payload.playerToken);
+    if (!playerId) {
+      this.sendEventToPeer(peerId, 'game_error', { message: 'Player session not found.' });
+      return;
+    }
+
+    const target = this.room.players.find((player) => player.id === payload.targetPlayerId);
+    const targetSocketId = target?.socketId;
+    const result = kickGamePlayer(this.room, playerId, payload.targetPlayerId);
+    if (result.error) {
+      this.sendEventToPeer(peerId, 'game_error', { message: result.error });
+      return;
+    }
+
+    if (targetSocketId && targetSocketId !== this.peer?.id) {
+      this.sendEventToPeer(targetSocketId, 'kicked', { message: 'You were removed by the host.' });
+      this.connections.get(targetSocketId)?.close();
+      this.connections.delete(targetSocketId);
+      this.peerIndex.delete(targetSocketId);
+    }
+
+    if (!this.room.sideShowReveal) {
+      this.clearSideShowTimeout();
+    }
     this.broadcastRoom();
   }
 
@@ -519,6 +586,14 @@ class PeerSocket {
       return;
     }
 
+    if (message.event === 'kicked') {
+      this.dispatch(message.event, message.payload);
+      window.setTimeout(() => {
+        this.resetTransport();
+      }, 50);
+      return;
+    }
+
     this.dispatch(message.event, message.payload);
   }
 
@@ -541,6 +616,35 @@ class PeerSocket {
 
       this.sendEventToPeer(player.socketId, 'room_state', roomState);
     }
+
+    this.syncTurnTimeout();
+  }
+
+  syncTurnTimeout() {
+    this.clearTurnTimeout();
+
+    if (
+      this.mode !== 'host' ||
+      !this.room ||
+      this.room.phase !== 'betting' ||
+      this.room.prompt ||
+      this.room.sideShowReveal ||
+      !this.room.round?.actionPlayerId ||
+      !this.room.round?.turnEndsAt
+    ) {
+      return;
+    }
+
+    const delay = Math.max(0, this.room.round.turnEndsAt - Date.now());
+    this.turnTimeout = window.setTimeout(() => {
+      if (!this.room) {
+        return;
+      }
+
+      handleTurnTimeout(this.room);
+      this.turnTimeout = null;
+      this.broadcastRoom();
+    }, delay + 20);
   }
 
   resolvePlayerId(peerId, playerToken) {
@@ -630,6 +734,13 @@ class PeerSocket {
     }
   }
 
+  clearTurnTimeout() {
+    if (this.turnTimeout) {
+      window.clearTimeout(this.turnTimeout);
+      this.turnTimeout = null;
+    }
+  }
+
   closeHostedRoom() {
     for (const connection of this.connections.values()) {
       connection.close();
@@ -641,6 +752,7 @@ class PeerSocket {
     this.tearingDown = true;
     this.clearJoinTimeout();
     this.clearSideShowTimeout();
+    this.clearTurnTimeout();
 
     for (const connection of this.connections.values()) {
       connection.close();

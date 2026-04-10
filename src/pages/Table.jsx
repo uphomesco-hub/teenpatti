@@ -13,180 +13,180 @@ import { clearStoredToken, getStoredToken, setStoredToken } from '../lib/storage
 import { emitGameCommand, socket } from '../lib/transport';
 
 const TABLE_POSITIONS = [
-  { top: '8%', left: '18%' },
-  { top: '8%', right: '18%' },
-  { top: '30%', left: '10%' },
-  { top: '30%', right: '10%' },
-  { bottom: '28%', left: '10%' },
-  { bottom: '28%', right: '10%' },
-  { bottom: '12%', left: '20%' },
-  { bottom: '12%', right: '20%' },
-  { top: '50%', left: '10%' },
-  { top: '50%', right: '10%' },
+  { bottom: '22%', left: '12%' },
+  { top: '48%', left: '8%' },
+  { top: '28%', left: '9%' },
+  { top: '10%', left: '18%' },
+  { top: '7%', left: '50%', transform: 'translateX(-50%)' },
+  { top: '10%', right: '18%' },
+  { top: '28%', right: '9%' },
+  { top: '48%', right: '8%' },
+  { bottom: '22%', right: '12%' },
+  { bottom: '14%', right: '25%' },
 ];
 
 const TABLE_LAYOUTS = {
-  1: [{ top: '18%', left: '18%' }],
+  1: [{ top: '9%', left: '50%', transform: 'translateX(-50%)' }],
   2: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
+    { top: '24%', left: '12%' },
+    { top: '24%', right: '12%' },
   ],
   3: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '30%', left: '10%' },
+    { top: '32%', left: '10%' },
+    { top: '9%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '32%', right: '10%' },
   ],
   4: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '30%', left: '10%' },
-    { top: '30%', right: '10%' },
+    { bottom: '22%', left: '12%' },
+    { top: '12%', left: '20%' },
+    { top: '12%', right: '20%' },
+    { bottom: '22%', right: '12%' },
   ],
   5: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '28%', left: '10%' },
-    { top: '28%', right: '10%' },
-    { bottom: '22%', left: '10%' },
+    { bottom: '22%', left: '12%' },
+    { top: '34%', left: '8%' },
+    { top: '9%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '34%', right: '8%' },
+    { bottom: '22%', right: '12%' },
   ],
   6: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '26%', left: '10%' },
-    { top: '26%', right: '10%' },
-    { bottom: '22%', left: '10%' },
-    { bottom: '22%', right: '10%' },
+    { bottom: '22%', left: '12%' },
+    { top: '36%', left: '8%' },
+    { top: '10%', left: '20%' },
+    { top: '10%', right: '20%' },
+    { top: '36%', right: '8%' },
+    { bottom: '22%', right: '12%' },
   ],
   7: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '22%', left: '10%' },
-    { top: '22%', right: '10%' },
-    { top: '38%', left: '10%' },
-    { top: '38%', right: '10%' },
-    { bottom: '12%', left: '18%' },
+    { bottom: '22%', left: '12%' },
+    { top: '44%', left: '8%' },
+    { top: '25%', left: '9%' },
+    { top: '8%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '25%', right: '9%' },
+    { top: '44%', right: '8%' },
+    { bottom: '22%', right: '12%' },
   ],
   8: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '21%', left: '10%' },
-    { top: '21%', right: '10%' },
-    { top: '35%', left: '10%' },
-    { top: '35%', right: '10%' },
-    { bottom: '12%', left: '18%' },
-    { bottom: '12%', right: '18%' },
+    { bottom: '22%', left: '12%' },
+    { top: '48%', left: '8%' },
+    { top: '28%', left: '9%' },
+    { top: '10%', left: '18%' },
+    { top: '10%', right: '18%' },
+    { top: '28%', right: '9%' },
+    { top: '48%', right: '8%' },
+    { bottom: '22%', right: '12%' },
   ],
   9: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '19%', left: '10%' },
-    { top: '19%', right: '10%' },
-    { top: '31%', left: '10%' },
-    { top: '31%', right: '10%' },
-    { bottom: '22%', left: '10%' },
-    { bottom: '22%', right: '10%' },
-    { bottom: '10%', left: '50%', transform: 'translateX(-50%)' },
+    { bottom: '22%', left: '12%' },
+    { top: '48%', left: '8%' },
+    { top: '28%', left: '9%' },
+    { top: '10%', left: '18%' },
+    { top: '7%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '10%', right: '18%' },
+    { top: '28%', right: '9%' },
+    { top: '48%', right: '8%' },
+    { bottom: '22%', right: '12%' },
   ],
   10: [
-    { top: '8%', left: '18%' },
-    { top: '8%', right: '18%' },
-    { top: '18%', left: '10%' },
-    { top: '18%', right: '10%' },
-    { top: '30%', left: '10%' },
-    { top: '30%', right: '10%' },
-    { bottom: '24%', left: '10%' },
-    { bottom: '24%', right: '10%' },
-    { bottom: '12%', left: '18%' },
-    { bottom: '12%', right: '18%' },
+    { bottom: '22%', left: '12%' },
+    { top: '48%', left: '8%' },
+    { top: '28%', left: '9%' },
+    { top: '10%', left: '18%' },
+    { top: '7%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '10%', right: '18%' },
+    { top: '28%', right: '9%' },
+    { top: '48%', right: '8%' },
+    { bottom: '22%', right: '12%' },
+    { bottom: '14%', right: '25%' },
   ],
 };
 
 const MOBILE_TABLE_POSITIONS = [
-  { top: '18%', left: '3%' },
-  { top: '18%', right: '3%' },
-  { top: '32%', left: '1%' },
-  { top: '32%', right: '1%' },
+  { bottom: '30%', left: '3%' },
   { top: '46%', left: '1%' },
+  { top: '32%', left: '1%' },
+  { top: '18%', left: '3%' },
+  { top: '12%', left: '50%', transform: 'translateX(-50%)' },
+  { top: '18%', right: '3%' },
+  { top: '32%', right: '1%' },
   { top: '46%', right: '1%' },
-  { bottom: '28%', left: '4%' },
-  { bottom: '28%', right: '4%' },
-  { bottom: '14%', left: '10%' },
-  { bottom: '14%', right: '10%' },
+  { bottom: '30%', right: '3%' },
+  { bottom: '18%', right: '10%' },
 ];
 
 const MOBILE_TABLE_LAYOUTS = {
-  1: [{ top: '18%', left: '3%' }],
+  1: [{ top: '13%', left: '50%', transform: 'translateX(-50%)' }],
   2: [
-    { top: '18%', left: '3%' },
-    { top: '18%', right: '3%' },
+    { top: '28%', left: '3%' },
+    { top: '28%', right: '3%' },
   ],
   3: [
-    { top: '18%', left: '3%' },
-    { top: '18%', right: '3%' },
-    { top: '32%', left: '1%' },
+    { top: '34%', left: '1%' },
+    { top: '13%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '34%', right: '1%' },
   ],
   4: [
+    { bottom: '30%', left: '3%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
-    { top: '32%', left: '1%' },
-    { top: '32%', right: '1%' },
+    { bottom: '30%', right: '3%' },
   ],
   5: [
-    { top: '18%', left: '3%' },
-    { top: '18%', right: '3%' },
-    { top: '30%', left: '1%' },
-    { top: '30%', right: '1%' },
-    { top: '44%', left: '1%' },
+    { bottom: '30%', left: '3%' },
+    { top: '37%', left: '1%' },
+    { top: '13%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '37%', right: '1%' },
+    { bottom: '30%', right: '3%' },
   ],
   6: [
+    { bottom: '30%', left: '3%' },
+    { top: '42%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
-    { top: '30%', left: '1%' },
-    { top: '30%', right: '1%' },
-    { top: '44%', left: '1%' },
-    { top: '44%', right: '1%' },
+    { top: '42%', right: '1%' },
+    { bottom: '30%', right: '3%' },
   ],
   7: [
-    { top: '16%', left: '3%' },
-    { top: '16%', right: '3%' },
-    { top: '27%', left: '1%' },
-    { top: '27%', right: '1%' },
-    { top: '39%', left: '1%' },
-    { top: '39%', right: '1%' },
-    { bottom: '28%', left: '4%' },
+    { bottom: '30%', left: '3%' },
+    { top: '46%', left: '1%' },
+    { top: '30%', left: '1%' },
+    { top: '13%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '30%', right: '1%' },
+    { top: '46%', right: '1%' },
+    { bottom: '30%', right: '3%' },
   ],
   8: [
-    { top: '16%', left: '3%' },
-    { top: '16%', right: '3%' },
-    { top: '27%', left: '1%' },
-    { top: '27%', right: '1%' },
-    { top: '39%', left: '1%' },
-    { top: '39%', right: '1%' },
-    { bottom: '28%', left: '4%' },
-    { bottom: '28%', right: '4%' },
+    { bottom: '30%', left: '3%' },
+    { top: '46%', left: '1%' },
+    { top: '32%', left: '1%' },
+    { top: '18%', left: '3%' },
+    { top: '18%', right: '3%' },
+    { top: '32%', right: '1%' },
+    { top: '46%', right: '1%' },
+    { bottom: '30%', right: '3%' },
   ],
   9: [
-    { top: '14%', left: '3%' },
-    { top: '14%', right: '3%' },
-    { top: '24%', left: '1%' },
-    { top: '24%', right: '1%' },
-    { top: '34%', left: '1%' },
-    { top: '34%', right: '1%' },
-    { bottom: '32%', left: '2%' },
-    { bottom: '32%', right: '2%' },
-    { bottom: '16%', left: '10%' },
+    { bottom: '30%', left: '3%' },
+    { top: '46%', left: '1%' },
+    { top: '32%', left: '1%' },
+    { top: '18%', left: '3%' },
+    { top: '12%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '18%', right: '3%' },
+    { top: '32%', right: '1%' },
+    { top: '46%', right: '1%' },
+    { bottom: '30%', right: '3%' },
   ],
   10: [
-    { top: '14%', left: '3%' },
-    { top: '14%', right: '3%' },
-    { top: '24%', left: '1%' },
-    { top: '24%', right: '1%' },
-    { top: '34%', left: '1%' },
-    { top: '34%', right: '1%' },
-    { bottom: '32%', left: '2%' },
-    { bottom: '32%', right: '2%' },
-    { bottom: '16%', left: '10%' },
-    { bottom: '16%', right: '10%' },
+    { bottom: '30%', left: '3%' },
+    { top: '46%', left: '1%' },
+    { top: '32%', left: '1%' },
+    { top: '18%', left: '3%' },
+    { top: '12%', left: '50%', transform: 'translateX(-50%)' },
+    { top: '18%', right: '3%' },
+    { top: '32%', right: '1%' },
+    { top: '46%', right: '1%' },
+    { bottom: '30%', right: '3%' },
+    { bottom: '18%', right: '10%' },
   ],
 };
 
@@ -242,11 +242,18 @@ function Table() {
       setError(event.message);
     }
 
+    function handleKicked(event) {
+      clearStoredToken(normalizedRoomId);
+      setError(event.message || 'You were removed by the host.');
+      navigate('/');
+    }
+
     socket.on('room_state', handleRoomState);
     socket.on('room_joined', handleJoinLike);
     socket.on('room_reconnected', handleJoinLike);
     socket.on('game_error', handleError);
     socket.on('connect_error', handleError);
+    socket.on('kicked', handleKicked);
 
     return () => {
       socket.off('room_state', handleRoomState);
@@ -254,8 +261,9 @@ function Table() {
       socket.off('room_reconnected', handleJoinLike);
       socket.off('game_error', handleError);
       socket.off('connect_error', handleError);
+      socket.off('kicked', handleKicked);
     };
-  }, [normalizedRoomId, playerToken]);
+  }, [navigate, normalizedRoomId, playerToken]);
 
   useEffect(() => {
     if (attemptedJoinRef.current) {
@@ -319,6 +327,14 @@ function Table() {
     });
   }
 
+  function kickPlayer(targetPlayerId) {
+    socket.emit('kick_player', {
+      roomId: normalizedRoomId,
+      playerToken,
+      targetPlayerId,
+    });
+  }
+
   function startRound() {
     socket.emit('start_round', {
       roomId: normalizedRoomId,
@@ -361,6 +377,10 @@ function Table() {
     setSelectedDiscards([]);
   }
 
+  function setCardReveal(reveal) {
+    submitCommand('set_card_reveal', { reveal });
+  }
+
   function toggleJokerRank(rank) {
     setConfigDraft((current) =>
       normalizeConfig({
@@ -383,11 +403,11 @@ function Table() {
     );
   }
 
-  const players = roomState?.players || [];
+  const players = useMemo(() => roomState?.players || [], [roomState?.players]);
   const me = players.find((player) => player.id === roomState?.you?.playerId) || null;
   const activeTurnPlayer = players.find((player) => player.id === roomState?.round?.actionPlayerId) || null;
   const winnerPlayer = players.find((player) => player.id === roomState?.winnerId) || null;
-  const otherPlayers = players.filter((player) => player.id !== me?.id);
+  const otherPlayers = useMemo(() => getClockwiseOtherPlayers(players, me), [players, me]);
   const presets = getPresetList();
   const activityLog = useMemo(() => [...(roomState?.history || [])].reverse(), [roomState?.history]);
   const isLobby = roomState?.phase === 'lobby';
@@ -458,6 +478,8 @@ function Table() {
           onToggleDiscard={toggleDiscard}
           onConfirmDiscard={confirmDiscard}
           onSubmitCommand={submitCommand}
+          onSetCardReveal={setCardReveal}
+          onKickPlayer={kickPlayer}
           onSetConfigDraft={setConfigDraft}
           onToggleJokerRank={toggleJokerRank}
           onToggleJokerSuit={toggleJokerSuit}
@@ -697,6 +719,8 @@ function GameView({
   onToggleDiscard,
   onConfirmDiscard,
   onSubmitCommand,
+  onSetCardReveal,
+  onKickPlayer,
   onSetConfigDraft,
   onToggleJokerRank,
   onToggleJokerSuit,
@@ -725,15 +749,11 @@ function GameView({
   const latestEvent = roomState?.history?.[roomState.history.length - 1] || null;
   const parsedEvent = useMemo(() => parseTableEvent(latestEvent, roomState.players), [latestEvent, roomState.players]);
   const sideShowReveal = roomState?.sideShowReveal || null;
-  const finalShowdownPlayers = useMemo(() => {
-    const playerIds = roomState?.round?.showdownPlayerIds || [];
-    return playerIds
-      .map((playerId) => roomState.players.find((player) => player.id === playerId))
-      .filter((player) => player?.cards?.length);
-  }, [roomState.players, roomState?.round?.showdownPlayerIds]);
   const [sideShowNow, setSideShowNow] = useState(0);
+  const [turnNow, setTurnNow] = useState(0);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [showLogPanel, setShowLogPanel] = useState(false);
+  const [showSetupPanel, setShowSetupPanel] = useState(false);
   const [raiseDraft, setRaiseDraft] = useState({ key: '', value: '' });
   const raiseControlKey = `${roomState.round?.number || 0}:${roomState.round?.currentStake || 0}:${actions.minRaiseAmount || 0}:${actions.maxRaiseAmount || 0}:${me?.hasSeenCards ? 'seen' : 'blind'}`;
   const raiseInputValue = raiseDraft.key === raiseControlKey
@@ -753,6 +773,8 @@ function GameView({
           Math.ceil((sideShowReveal.endsAt - (sideShowNow || sideShowReveal.endsAt - 10_000)) / 1000),
         )
       : 0;
+  const turnProgress = getTurnProgress(roomState.round, turnNow);
+  const canToggleOwnReveal = Boolean(actions.canSetCardReveal);
 
   useEffect(() => {
     if (!sideShowReveal?.endsAt) {
@@ -764,6 +786,20 @@ function GameView({
     }, 250);
     return () => window.clearInterval(intervalId);
   }, [sideShowReveal?.endsAt]);
+
+  useEffect(() => {
+    if (!roomState.round?.turnEndsAt || isFinished) {
+      return;
+    }
+
+    const tick = () => setTurnNow(Date.now());
+    const frameId = window.requestAnimationFrame(tick);
+    const intervalId = window.setInterval(tick, 250);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearInterval(intervalId);
+    };
+  }, [isFinished, roomState.round?.turnEndsAt]);
 
   const actionButtons = [
     actions.canLook
@@ -819,7 +855,7 @@ function GameView({
         }
       : null,
   ].filter(Boolean);
-  const canUseFooterActions = canAct || actions.canLook || actions.canDiscard;
+  const canUseFooterActions = canAct || actions.canLook || actions.canDiscard || canToggleOwnReveal || canStartNextRound;
 
   return (
     <main className="game-main game-main-full">
@@ -830,16 +866,36 @@ function GameView({
         <div className="game-side-dock">
           <button
             className={`dock-toggle ${showInfoPanel ? 'dock-toggle-active' : ''}`}
-            onClick={() => setShowInfoPanel((current) => !current)}
+            onClick={() => {
+              setShowInfoPanel((current) => !current);
+              setShowLogPanel(false);
+              setShowSetupPanel(false);
+            }}
           >
             Info
           </button>
           <button
             className={`dock-toggle ${showLogPanel ? 'dock-toggle-active' : ''}`}
-            onClick={() => setShowLogPanel((current) => !current)}
+            onClick={() => {
+              setShowLogPanel((current) => !current);
+              setShowInfoPanel(false);
+              setShowSetupPanel(false);
+            }}
           >
             Log
           </button>
+          {canStartNextRound ? (
+            <button
+              className={`dock-toggle dock-toggle-accent ${showSetupPanel ? 'dock-toggle-active' : ''}`}
+              onClick={() => {
+                setShowSetupPanel((current) => !current);
+                setShowInfoPanel(false);
+                setShowLogPanel(false);
+              }}
+            >
+              Setup
+            </button>
+          ) : null}
         </div>
 
         {showInfoPanel ? (
@@ -875,13 +931,43 @@ function GameView({
               </div>
             </div>
 
-            {canStartNextRound ? (
-              <button className="lounge-cta lounge-cta-primary rail-next-button" onClick={onStartRound}>
-                Start Next Round
-              </button>
+            {roomState.you?.isHost ? (
+              <div className="hud-card host-controls-card">
+                <div className="hud-kicker">Host Controls</div>
+                <div className="host-control-list">
+                  {roomState.players
+                    .filter((player) => player.id !== me?.id)
+                    .map((player) => (
+                      <div key={player.id} className="host-control-row">
+                        <span>{player.name}</span>
+                        <button
+                          className="mini-danger-btn"
+                          onClick={() => onKickPlayer(player.id)}
+                        >
+                          Kick
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
             ) : null}
 
             {error ? <div className="lounge-error">{error}</div> : null}
+          </aside>
+        ) : null}
+
+        {showSetupPanel && canStartNextRound ? (
+          <aside className="game-flyout game-flyout-setup">
+            <NextRoundSettings
+              configDraft={configDraft}
+              presets={presets}
+              draftPreset={draftPreset}
+              onSetConfigDraft={onSetConfigDraft}
+              onToggleJokerRank={onToggleJokerRank}
+              onToggleJokerSuit={onToggleJokerSuit}
+              onSaveRules={onSaveRules}
+              onStartRound={onStartRound}
+            />
           </aside>
         ) : null}
 
@@ -933,7 +1019,7 @@ function GameView({
         {otherPlayers.map((player, index) => (
           <div
             key={player.id}
-            className={`table-seat ${isTopCenterSeat(seatPositions[index]) ? 'table-seat-top' : ''} ${crowdedTable ? 'table-seat-compact' : ''} ${player.id === activeTurnPlayer?.id ? 'table-seat-active' : ''} ${player.status === 'packed' ? 'table-seat-folded' : ''}`}
+            className={`table-seat ${isTopCenterSeat(seatPositions[index]) ? 'table-seat-top' : ''} ${crowdedTable ? 'table-seat-compact' : ''} ${player.id === activeTurnPlayer?.id ? 'table-seat-active' : ''} ${player.status === 'packed' ? 'table-seat-folded' : ''} ${player.id === winnerPlayer?.id ? 'table-seat-winner' : ''}`}
             style={seatPositions[index] || TABLE_POSITIONS[index] || TABLE_POSITIONS[0]}
           >
             <div className="table-seat-avatar">
@@ -952,13 +1038,17 @@ function GameView({
             {parsedEvent?.playerId === player.id && parsedEvent.amount ? (
               <div className="table-seat-last-bet">{parsedEvent.tokenText}</div>
             ) : null}
-            <div className="table-seat-cards">
-              {Array.from({ length: Math.min(player.handCount || 0, 3) }, (_, cardIndex) => (
-                <span key={`${player.id}-card-${cardIndex}`} className="table-seat-cardback" />
-              ))}
-            </div>
+            <SeatCards player={player} />
+            {player.cards?.length > 0 && player.handLabel ? (
+              <div className="table-seat-hand-label">{player.handLabel}</div>
+            ) : null}
             {labelForPlayerState(player) ? <div className="table-seat-state">{labelForPlayerState(player)}</div> : null}
-            {player.id === activeTurnPlayer?.id ? <div className="table-seat-turn-indicator">Turn</div> : null}
+            {player.id === activeTurnPlayer?.id ? (
+              <>
+                <div className="table-seat-turn-indicator">Turn</div>
+                <TurnTimerBar progress={turnProgress} />
+              </>
+            ) : null}
             {parsedEvent?.playerId === player.id ? (
               <div className={`seat-action-token ${parsedEvent.amount ? 'seat-action-token-money' : ''}`}>
                 {parsedEvent.tokenText}
@@ -1057,6 +1147,7 @@ function GameView({
                 Pick {roomState.you.pendingDiscardCount} card(s) to discard.
               </div>
             ) : null}
+            {me?.id === activeTurnPlayer?.id ? <TurnTimerBar progress={turnProgress} /> : null}
           </div>
 
           {parsedEvent?.playerId === me?.id ? (
@@ -1067,133 +1158,9 @@ function GameView({
         </div>
 
         {winnerPlayer ? (
-          <>
-            <div className="winner-toast">
-              {winnerDisplayName} won {formatChips(roomState.round?.pot)} with {winnerPlayer.handLabel || 'the best hand'}. Bank {formatExactChips(winnerPlayer.chips)}.
-            </div>
-            <div className="winner-showcase">
-              <div className="winner-showcase-kicker">Winning Hand</div>
-              <div className="winner-showcase-title">
-                {winnerDisplayName} won {formatChips(roomState.round?.pot)}
-              </div>
-              <div className="winner-showcase-copy">
-                {winnerPlayer.handLabel || 'Winning hand revealed'} • Bank {formatExactChips(winnerPlayer.chips)}
-              </div>
-              {finalShowdownPlayers.length > 1 ? (
-                <div className="showdown-hands">
-                  {finalShowdownPlayers.map((player) => (
-                    <div
-                      key={player.id}
-                      className={`showdown-hand ${player.id === winnerPlayer.id ? 'showdown-hand-winner' : ''}`}
-                    >
-                      <div className="showdown-hand-name">
-                        {player.id === me?.id ? 'You' : player.name}
-                      </div>
-                      <div className="showdown-hand-label">{player.handLabel || 'Hand revealed'}</div>
-                      <div className="winner-showcase-cards showdown-hand-cards">
-                        {(player.cards || []).map((card, index) => (
-                          <RevealedCard key={card.id} card={card} index={index} />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="winner-showcase-cards">
-                  {(winnerPlayer.cards || []).map((card, index) => (
-                    <RevealedCard key={card.id} card={card} index={index} />
-                  ))}
-                </div>
-              )}
-              {canStartNextRound ? (
-                <>
-                  <div className="next-round-config">
-                    <div className="next-round-config-head">
-                      <div className="winner-showcase-kicker">Next Round Setup</div>
-                      <div className="next-round-config-copy">Host can change the variation before starting the next hand.</div>
-                    </div>
-
-                    <div className="next-round-config-grid">
-                      <label className="lounge-field next-round-field">
-                        <span>Preset</span>
-                        <select
-                          className="lounge-input"
-                          value={draftPreset?.id || 'classic'}
-                          onChange={(event) => onSetConfigDraft(buildConfigFromPreset(event.target.value))}
-                        >
-                          {presets.map((preset) => (
-                            <option key={preset.id} value={preset.id}>
-                              {preset.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="lounge-field next-round-field">
-                        <span>Boot</span>
-                        <input
-                          className="lounge-input"
-                          type="number"
-                          value={configDraft.bootAmount}
-                          onChange={(event) =>
-                            onSetConfigDraft(normalizeConfig({ ...configDraft, bootAmount: Number(event.target.value) }))
-                          }
-                        />
-                      </label>
-
-                      <label className="lounge-field next-round-field">
-                        <span>Cards Dealt</span>
-                        <input
-                          className="lounge-input"
-                          type="number"
-                          min="1"
-                          max="10"
-                          disabled={configDraft.specialHandMode === 'kiss_miss'}
-                          value={configDraft.cardsDealt}
-                          onChange={(event) =>
-                            onSetConfigDraft(normalizeConfig({ ...configDraft, cardsDealt: Number(event.target.value) }))
-                          }
-                        />
-                      </label>
-
-                      <label className="lounge-field next-round-field">
-                        <span>Cards Kept</span>
-                        <input
-                          className="lounge-input"
-                          type="number"
-                          min="1"
-                          max={configDraft.specialHandMode === 'kiss_miss' ? '5' : '3'}
-                          disabled={configDraft.specialHandMode === 'kiss_miss'}
-                          value={configDraft.cardsToKeep}
-                          onChange={(event) =>
-                            onSetConfigDraft(normalizeConfig({ ...configDraft, cardsToKeep: Number(event.target.value) }))
-                          }
-                        />
-                      </label>
-                    </div>
-
-                    <div className="next-round-config-copy">Side show and show stay on for every round.</div>
-
-                    <JokerConfigurator
-                      configDraft={configDraft}
-                      onSetConfigDraft={onSetConfigDraft}
-                      onToggleJokerRank={onToggleJokerRank}
-                      onToggleJokerSuit={onToggleJokerSuit}
-                    />
-                  </div>
-
-                  <div className="winner-showcase-actions">
-                    <button className="lounge-cta lounge-cta-secondary" onClick={onSaveRules}>
-                      Save Rules
-                    </button>
-                    <button className="lounge-cta lounge-cta-primary" onClick={onStartRound}>
-                      Start Next Round
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </>
+          <div className="winner-toast">
+            {winnerDisplayName} won {formatChips(roomState.round?.pot)}. Cards are shown at the seats.
+          </div>
         ) : null}
 
         {sideShowReveal ? (
@@ -1205,34 +1172,6 @@ function GameView({
             <div className="side-show-reveal-copy">
               {sideShowReveal.loserName} packs in {sideShowCountdown}s.
             </div>
-
-            {sideShowReveal.canSeeHands ? (
-              <div className="side-show-reveal-grid">
-                <div className={`side-show-seat ${sideShowReveal.winnerId === sideShowReveal.requestorId ? 'side-show-seat-winner' : ''}`}>
-                  <div className="side-show-seat-name">{sideShowReveal.requestorName}</div>
-                  <div className="side-show-seat-hand">{sideShowReveal.requestorHandLabel}</div>
-                  <div className="side-show-seat-cards">
-                    {sideShowReveal.requestorCards.map((card, index) => (
-                      <RevealedCard key={card.id} card={card} index={index} delayStep={80} />
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`side-show-seat ${sideShowReveal.winnerId === sideShowReveal.targetId ? 'side-show-seat-winner' : ''}`}>
-                  <div className="side-show-seat-name">{sideShowReveal.targetName}</div>
-                  <div className="side-show-seat-hand">{sideShowReveal.targetHandLabel}</div>
-                  <div className="side-show-seat-cards">
-                    {sideShowReveal.targetCards.map((card, index) => (
-                      <RevealedCard key={card.id} card={card} index={index} delayStep={80} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="side-show-public-note">
-                Cards stay private to {sideShowReveal.requestorName} and {sideShowReveal.targetName}.
-              </div>
-            )}
           </div>
         ) : null}
 
@@ -1258,6 +1197,28 @@ function GameView({
         <div className="control-buttons">
           {canUseFooterActions ? (
             <>
+              {canToggleOwnReveal ? (
+                <button
+                  className="control-btn control-btn-dark"
+                  onClick={() => onSetCardReveal(!roomState.you.showCardsAfterRound)}
+                >
+                  {roomState.you.showCardsAfterRound ? 'Hide My Cards' : 'Show My Cards'}
+                </button>
+              ) : null}
+
+              {canStartNextRound ? (
+                <button
+                  className="control-btn control-btn-gold"
+                  onClick={() => {
+                    setShowSetupPanel(true);
+                    setShowInfoPanel(false);
+                    setShowLogPanel(false);
+                  }}
+                >
+                  Round Setup
+                </button>
+              ) : null}
+
               {canAct && actions.canRaise ? (
                 <div className="raise-control-inline">
                   <input
@@ -1313,10 +1274,6 @@ function GameView({
                 </button>
               ))}
             </>
-          ) : canStartNextRound ? (
-            <button className="control-btn control-btn-gold" onClick={onStartRound}>
-              Start Next Round
-            </button>
           ) : (
             <div className="turn-wait">
               {isFinished ? 'Round finished. Host can start the next hand.' : `Waiting for ${activeTurnPlayer?.name || 'player'} to act.`}
@@ -1328,14 +1285,130 @@ function GameView({
   );
 }
 
-function RevealedCard({ card, index, delayStep = 90 }) {
+function SeatCards({ player }) {
+  const visibleCards = player.cards || [];
+  if (visibleCards.length > 0) {
+    return (
+      <div className="table-seat-cards table-seat-cards-visible">
+        {visibleCards.map((card) => (
+          <span key={card.id} className="table-seat-face-card">
+            <span className={isRedSuit(card.suitSymbol) ? 'table-seat-face-card-red' : ''}>{card.label}</span>
+          </span>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="winner-card"
-      style={{ animationDelay: `${index * delayStep}ms` }}
-    >
-      <span className={`winner-card-corner ${isRedSuit(card.suitSymbol) ? 'winner-card-corner-red' : ''}`}>{card.label}</span>
-      <span className={`winner-card-rank ${isRedSuit(card.suitSymbol) ? 'winner-card-rank-red' : ''}`}>{card.label}</span>
+    <div className="table-seat-cards">
+      {Array.from({ length: Math.min(player.handCount || 0, 3) }, (_, cardIndex) => (
+        <span key={`${player.id}-card-${cardIndex}`} className="table-seat-cardback" />
+      ))}
+    </div>
+  );
+}
+
+function TurnTimerBar({ progress }) {
+  return (
+    <div className="turn-timer-bar">
+      <i style={{ transform: `scaleX(${progress})` }} />
+    </div>
+  );
+}
+
+function NextRoundSettings({
+  configDraft,
+  presets,
+  draftPreset,
+  onSetConfigDraft,
+  onToggleJokerRank,
+  onToggleJokerSuit,
+  onSaveRules,
+  onStartRound,
+}) {
+  return (
+    <div className="hud-card next-round-config next-round-config-panel">
+      <div className="next-round-config-head">
+        <div className="winner-showcase-kicker">Next Round Setup</div>
+        <div className="next-round-config-copy">Change the variation here, then start the next hand.</div>
+      </div>
+
+      <div className="next-round-config-grid">
+        <label className="lounge-field next-round-field">
+          <span>Preset</span>
+          <select
+            className="lounge-input"
+            value={draftPreset?.id || 'classic'}
+            onChange={(event) => onSetConfigDraft(buildConfigFromPreset(event.target.value))}
+          >
+            {presets.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="lounge-field next-round-field">
+          <span>Boot</span>
+          <input
+            className="lounge-input"
+            type="number"
+            value={configDraft.bootAmount}
+            onChange={(event) =>
+              onSetConfigDraft(normalizeConfig({ ...configDraft, bootAmount: Number(event.target.value) }))
+            }
+          />
+        </label>
+
+        <label className="lounge-field next-round-field">
+          <span>Cards Dealt</span>
+          <input
+            className="lounge-input"
+            type="number"
+            min="1"
+            max="10"
+            disabled={configDraft.specialHandMode === 'kiss_miss'}
+            value={configDraft.cardsDealt}
+            onChange={(event) =>
+              onSetConfigDraft(normalizeConfig({ ...configDraft, cardsDealt: Number(event.target.value) }))
+            }
+          />
+        </label>
+
+        <label className="lounge-field next-round-field">
+          <span>Cards Kept</span>
+          <input
+            className="lounge-input"
+            type="number"
+            min="1"
+            max={configDraft.specialHandMode === 'kiss_miss' ? '5' : '3'}
+            disabled={configDraft.specialHandMode === 'kiss_miss'}
+            value={configDraft.cardsToKeep}
+            onChange={(event) =>
+              onSetConfigDraft(normalizeConfig({ ...configDraft, cardsToKeep: Number(event.target.value) }))
+            }
+          />
+        </label>
+      </div>
+
+      <div className="next-round-config-copy">Side show and show stay on for every round.</div>
+
+      <JokerConfigurator
+        configDraft={configDraft}
+        onSetConfigDraft={onSetConfigDraft}
+        onToggleJokerRank={onToggleJokerRank}
+        onToggleJokerSuit={onToggleJokerSuit}
+      />
+
+      <div className="winner-showcase-actions next-round-config-actions">
+        <button className="lounge-cta lounge-cta-secondary" onClick={onSaveRules}>
+          Save Rules
+        </button>
+        <button className="lounge-cta lounge-cta-primary" onClick={onStartRound}>
+          Start Next Round
+        </button>
+      </div>
     </div>
   );
 }
@@ -1643,6 +1716,20 @@ function isRedSuit(suitSymbol) {
   return suitSymbol === '♥' || suitSymbol === '♦';
 }
 
+function getClockwiseOtherPlayers(players, me) {
+  if (!me) {
+    return players.filter((player) => player.id !== me?.id);
+  }
+
+  return players
+    .filter((player) => player.id !== me.id)
+    .sort((left, right) => {
+      const leftDistance = (left.seat - me.seat + players.length) % players.length;
+      const rightDistance = (right.seat - me.seat + players.length) % players.length;
+      return leftDistance - rightDistance;
+    });
+}
+
 function getSeatPositions(count, isCompactMobile = false) {
   if (isCompactMobile) {
     return MOBILE_TABLE_LAYOUTS[count] || MOBILE_TABLE_POSITIONS;
@@ -1672,6 +1759,15 @@ function snapRaiseAmount(value, min, max, step) {
   const clamped = clampNumber(Number(value), safeMin, safeMax);
   const snapped = safeMin + Math.round((clamped - safeMin) / safeStep) * safeStep;
   return clampNumber(snapped, safeMin, safeMax);
+}
+
+function getTurnProgress(round, now) {
+  if (!round?.turnEndsAt || !round?.turnStartedAt || !round?.turnDurationMs) {
+    return 0;
+  }
+
+  const remaining = round.turnEndsAt - now;
+  return clampNumber(remaining / round.turnDurationMs, 0, 1);
 }
 
 function playerStatusIcon(player) {

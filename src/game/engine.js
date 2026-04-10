@@ -2,6 +2,8 @@ import { createDeck, RANKS, SUITS } from './cards';
 import { compareTeenPattiHands, evaluateBestTeenPattiHand } from './evaluator';
 import { buildConfigFromPreset, normalizeConfig } from './variants';
 
+const TURN_DURATION_MS = 30_000;
+
 function randomId() {
   return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -37,6 +39,7 @@ function createPlayer(socketId, username) {
     hand: [],
     discarded: [],
     pendingDiscardCount: 0,
+    showCardsAfterRound: false,
   };
 }
 
@@ -295,8 +298,10 @@ function finishRound(room, winnerPlayer, reason) {
   room.round.winnerId = winnerPlayer.id;
   room.prompt = null;
   room.sideShowReveal = null;
+  clearActionPlayer(room);
   winnerPlayer.chips += room.round.pot;
   winnerPlayer.status = 'winner';
+  winnerPlayer.showCardsAfterRound = true;
 
   pushHistory(room, `${winnerPlayer.name} won ${room.round.pot} chips. ${reason}`);
 }
@@ -311,6 +316,29 @@ function maybeFinishRound(room) {
   return true;
 }
 
+function clearActionPlayer(room) {
+  if (!room.round) {
+    return;
+  }
+
+  room.round.actionPlayerId = '';
+  room.round.turnStartedAt = 0;
+  room.round.turnEndsAt = 0;
+}
+
+function setActionPlayer(room, player) {
+  if (!room.round || !player) {
+    clearActionPlayer(room);
+    return;
+  }
+
+  const now = Date.now();
+  room.round.actionPlayerId = player.id;
+  room.round.turnStartedAt = now;
+  room.round.turnEndsAt = now + TURN_DURATION_MS;
+  room.round.turnDurationMs = TURN_DURATION_MS;
+}
+
 function advanceTurn(room, fromPlayerId, fromSeat = null) {
   if (maybeFinishRound(room)) {
     return;
@@ -321,7 +349,7 @@ function advanceTurn(room, fromPlayerId, fromSeat = null) {
     return;
   }
 
-  room.round.actionPlayerId = nextPlayer.id;
+  setActionPlayer(room, nextPlayer);
 }
 
 function clearRoundState(room) {
@@ -336,6 +364,7 @@ function clearRoundState(room) {
     player.hand = [];
     player.discarded = [];
     player.pendingDiscardCount = 0;
+    player.showCardsAfterRound = false;
   });
 }
 
@@ -459,7 +488,7 @@ export function disconnectPlayer(room, playerId) {
   player.socketId = null;
 }
 
-export function leaveRoom(room, playerId) {
+function removePlayerFromRoom(room, playerId, historyMessage) {
   const player = getPlayer(room, playerId);
   if (!player) {
     return { deleted: false };
@@ -468,6 +497,7 @@ export function leaveRoom(room, playerId) {
   const leavingSeat = player.seat;
   const leavingWasActionPlayer = room.round?.actionPlayerId === playerId;
   const pendingPrompt = room.prompt;
+  const pendingSideShowReveal = room.sideShowReveal;
 
   room.players = room.players.filter((entry) => entry.id !== playerId);
   assignSeats(room);
@@ -481,7 +511,7 @@ export function leaveRoom(room, playerId) {
     return { deleted: true };
   }
 
-  pushHistory(room, `${player.name} left the table.`);
+  pushHistory(room, historyMessage(player));
   if (room.phase !== 'lobby' && room.phase !== 'finished') {
     const finished = maybeFinishRound(room);
     if (finished) {
@@ -494,11 +524,65 @@ export function leaveRoom(room, playerId) {
     ) {
       room.prompt = null;
       advanceTurn(room, pendingPrompt.requestorId, pendingPrompt.requestorId === playerId ? leavingSeat : null);
+    } else if (
+      pendingSideShowReveal &&
+      (pendingSideShowReveal.requestorId === playerId || pendingSideShowReveal.targetId === playerId)
+    ) {
+      room.sideShowReveal = null;
+      room.phase = 'betting';
+      advanceTurn(
+        room,
+        pendingSideShowReveal.requestorId,
+        pendingSideShowReveal.requestorId === playerId ? leavingSeat : pendingSideShowReveal.requestorSeat,
+      );
     } else if (leavingWasActionPlayer && room.phase !== 'side_show_reveal') {
       advanceTurn(room, playerId, leavingSeat);
     }
   }
   return { deleted: false };
+}
+
+export function leaveRoom(room, playerId) {
+  return removePlayerFromRoom(room, playerId, (player) => `${player.name} left the table.`);
+}
+
+export function kickPlayer(room, playerId, targetPlayerId) {
+  if (playerId !== room.hostPlayerId) {
+    return { error: 'Only the host can remove players.' };
+  }
+
+  if (playerId === targetPlayerId) {
+    return { error: 'The host cannot remove themselves.' };
+  }
+
+  const target = getPlayer(room, targetPlayerId);
+  if (!target) {
+    return { error: 'Player not found.' };
+  }
+
+  return removePlayerFromRoom(room, targetPlayerId, (player) => `${player.name} was removed by the host.`);
+}
+
+export function handleTurnTimeout(room, now = Date.now()) {
+  if (
+    room.phase !== 'betting' ||
+    room.prompt ||
+    room.sideShowReveal ||
+    !room.round?.actionPlayerId ||
+    !room.round?.turnEndsAt ||
+    now < room.round.turnEndsAt
+  ) {
+    return { ok: false };
+  }
+
+  const player = getPlayer(room, room.round.actionPlayerId);
+  const fromSeat = player?.seat ?? null;
+  if (player) {
+    pushHistory(room, `${player.name}'s turn timed out.`);
+  }
+
+  advanceTurn(room, room.round.actionPlayerId, fromSeat);
+  return { ok: true };
 }
 
 export function updateConfig(room, playerId, payload) {
@@ -584,6 +668,9 @@ export function startRound(room, playerId) {
     winnerId: '',
     showAllCards: false,
     showdownPlayerIds: [],
+    turnStartedAt: 0,
+    turnEndsAt: 0,
+    turnDurationMs: TURN_DURATION_MS,
     activeJokerRanks: resolvedJokers.activeJokerRanks,
     activeJokerSuits: resolvedJokers.activeJokerSuits,
   };
@@ -608,7 +695,7 @@ export function startRound(room, playerId) {
   }
 
   const opener = getNextSeatedPlayer(eligiblePlayers, dealer.seat) || eligiblePlayers[0];
-  room.round.actionPlayerId = opener.id;
+  setActionPlayer(room, opener);
 
   pushHistory(
     room,
@@ -751,6 +838,11 @@ function handlePack(room, player) {
     return { error: 'It is not your turn.' };
   }
 
+  const activeBeforePack = getActivePlayers(room);
+  if (activeBeforePack.length === 2) {
+    room.round.showdownPlayerIds = activeBeforePack.map((entry) => entry.id);
+  }
+
   player.status = 'packed';
   pushHistory(room, `${player.name} packed.`);
   advanceTurn(room, player.id);
@@ -823,6 +915,7 @@ function handlePromptAnswer(room, player, payload) {
   const result = evaluateWinner(room, requestor, target);
   room.prompt = null;
   room.phase = 'side_show_reveal';
+  clearActionPlayer(room);
   room.sideShowReveal = {
     requestorId: requestor.id,
     requestorSeat: requestor.seat,
@@ -832,7 +925,7 @@ function handlePromptAnswer(room, player, payload) {
     loserId: result.loserPlayer.id,
     endsAt: Date.now() + 10_000,
   };
-  pushHistory(room, `${target.name} accepted the side show. Showing both hands for 10 seconds.`);
+  pushHistory(room, `${target.name} accepted the side show. Showing the side-show result for 10 seconds.`);
   return { ok: true, effect: { type: 'side_show_reveal_started' } };
 }
 
@@ -866,6 +959,21 @@ function handleShow(room, player) {
   return { ok: true };
 }
 
+function handleSetCardReveal(room, player, payload = {}) {
+  if (room.phase !== 'finished') {
+    return { error: 'Cards can only be shared after the round finishes.' };
+  }
+
+  const forcedRevealIds = new Set([room.winnerId, ...(room.round?.showdownPlayerIds || [])]);
+  if (forcedRevealIds.has(player.id)) {
+    return { error: 'Your cards are already shown for this hand.' };
+  }
+
+  player.showCardsAfterRound = Boolean(payload.reveal);
+  pushHistory(room, `${player.name} ${player.showCardsAfterRound ? 'showed' : 'hid'} their cards after the hand.`);
+  return { ok: true };
+}
+
 export function handleCommand(room, playerId, type, payload = {}) {
   const player = getPlayer(room, playerId);
   if (!player) {
@@ -876,11 +984,11 @@ export function handleCommand(room, playerId, type, payload = {}) {
     return { error: 'The round has not started yet.' };
   }
 
-  if (room.sideShowReveal) {
+  if (room.sideShowReveal && type !== 'set_card_reveal') {
     return { error: 'Wait for the side show reveal to finish.' };
   }
 
-  if (room.prompt && type !== 'answer_prompt') {
+  if (room.prompt && type !== 'answer_prompt' && type !== 'set_card_reveal') {
     return { error: 'Resolve the current prompt before taking another action.' };
   }
 
@@ -901,6 +1009,8 @@ export function handleCommand(room, playerId, type, payload = {}) {
       return handlePromptAnswer(room, player, payload);
     case 'show':
       return handleShow(room, player);
+    case 'set_card_reveal':
+      return handleSetCardReveal(room, player, payload);
     default:
       return { error: 'Unknown command.' };
   }
@@ -912,6 +1022,9 @@ function getAvailableActions(room, player) {
   const sideShowTarget = getPreviousSeenPlayer(room, player.id);
   const callAmount = room.round ? getCallAmount(room, player) : 0;
   const minRaiseAmount = room.round ? getMinRaiseAmount(room, player) : 0;
+  const forcedRevealIds = new Set([room.winnerId, ...(room.round?.showdownPlayerIds || [])]);
+  const cardsForcedOpen = room.phase === 'finished' && forcedRevealIds.has(player.id);
+  const canSetCardReveal = room.phase === 'finished' && player.hand.length > 0 && !cardsForcedOpen;
 
   return {
     canDiscard: room.phase === 'betting' && player.pendingDiscardCount > 0 && player.hasSeenCards,
@@ -941,6 +1054,9 @@ function getAvailableActions(room, player) {
       room.config.showEnabled &&
       activeCount === 2 &&
       player.chips >= callAmount,
+    canSetCardReveal,
+    cardsForcedOpen,
+    showCardsAfterRound: player.showCardsAfterRound,
     sideShowTargetId: sideShowTarget?.id || '',
     callAmount,
     raiseAmount: room.round ? getRaiseAmount(room, player) : 0,
@@ -950,10 +1066,21 @@ function getAvailableActions(room, player) {
   };
 }
 
-function serializePlayer(room, player, isSelf) {
+function serializePlayer(room, player, isSelf, viewerId = '') {
+  const forcedRevealIds = new Set([room.winnerId, ...(room.round?.showdownPlayerIds || [])]);
+  const cardsForcedOpen = room.phase === 'finished' && forcedRevealIds.has(player.id);
+  const sideShowParticipantIds = new Set(
+    room.phase === 'side_show_reveal' && room.sideShowReveal
+      ? [room.sideShowReveal.requestorId, room.sideShowReveal.targetId]
+      : [],
+  );
+  const cardsOpenForSideShow =
+    sideShowParticipantIds.has(viewerId) &&
+    sideShowParticipantIds.has(player.id);
   const revealCards =
-    room.phase === 'finished' ||
-    room.round?.showAllCards ||
+    cardsForcedOpen ||
+    cardsOpenForSideShow ||
+    (room.phase === 'finished' && player.showCardsAfterRound) ||
     (isSelf && player.hasSeenCards);
   const cards = revealCards ? player.hand.map((cardId) => serializeCard(room, cardId)) : [];
   const handScore = revealCards && player.hand.length >= room.config.cardsToKeep
@@ -976,6 +1103,8 @@ function serializePlayer(room, player, isSelf) {
     hasSeenCards: player.hasSeenCards,
     handCount: player.hand.length,
     pendingDiscardCount: player.pendingDiscardCount,
+    showCardsAfterRound: player.showCardsAfterRound,
+    cardsForcedOpen,
     cards,
     handLabel: handScore?.label || '',
   };
@@ -1112,6 +1241,9 @@ export function serializeRoomForPlayer(room, playerId) {
           actionPlayerId: room.round.actionPlayerId,
           showAllCards: room.round.showAllCards,
           showdownPlayerIds: room.round.showdownPlayerIds || [],
+          turnStartedAt: room.round.turnStartedAt || 0,
+          turnEndsAt: room.round.turnEndsAt || 0,
+          turnDurationMs: room.round.turnDurationMs || TURN_DURATION_MS,
           activeJokerRanks: room.round.activeJokerRanks || [],
           activeJokerSuits: room.round.activeJokerSuits || [],
           specialHandMode: room.config.specialHandMode,
@@ -1120,13 +1252,14 @@ export function serializeRoomForPlayer(room, playerId) {
     players: room.players
       .slice()
       .sort((left, right) => left.seat - right.seat)
-      .map((player) => serializePlayer(room, player, viewer?.id === player.id)),
+      .map((player) => serializePlayer(room, player, viewer?.id === player.id, viewer?.id || '')),
     you: viewer
       ? {
           playerId: viewer.id,
           playerToken: viewer.token,
           chips: viewer.chips,
           hasSeenCards: viewer.hasSeenCards,
+          showCardsAfterRound: viewer.showCardsAfterRound,
           handVisible: canViewerSeeHand,
           handCount: viewer.hand.length,
           hand: canViewerSeeHand ? viewer.hand.map((cardId) => serializeCard(room, cardId)).filter(Boolean) : [],
