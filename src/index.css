@@ -2469,6 +2469,12 @@ body.viewport-locked {
   gap: 12px;
 }
 
+.hero-seat-statuses {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+}
+
 .hero-seat-name {
   margin-top: 5px;
   font-family: 'Noto Serif', serif;
@@ -2479,6 +2485,18 @@ body.viewport-locked {
   color: var(--lounge-gold);
   font-family: 'Noto Serif', serif;
   font-size: 1.28rem;
+}
+
+.hero-seat-stack-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.hero-seat-state-icon {
+  font-size: 1.1rem;
+  color: var(--lounge-gold);
 }
 
 .hand-cards {
@@ -2648,6 +2666,7 @@ body.viewport-locked {
   background: rgba(14, 14, 14, 0.54);
   backdrop-filter: blur(10px);
   max-width: 320px;
+  z-index: 120;
 }
 
 .winner-toast {
@@ -3395,12 +3414,12 @@ body.viewport-locked {
     --table-width: min(94vw, 390px);
     --table-height: min(54vh, 470px);
     --seat-width: 64px;
-    --seat-avatar-size: 34px;
-    --seat-card-width: 12px;
-    --seat-card-height: 18px;
+    --seat-avatar-size: 30px;
+    --seat-card-width: 13px;
+    --seat-card-height: 20px;
     --seat-font-size: 0.46rem;
-    --hero-card-width: 58px;
-    --hero-card-height: 88px;
+    --hero-card-width: 46px;
+    --hero-card-height: 70px;
   }
 
   .game-table-glow {
@@ -3439,23 +3458,23 @@ body.viewport-locked {
 
   .table-stage-status {
     top: 10px;
-    left: auto;
-    right: 10px;
-    transform: none;
-    grid-template-columns: 72px 132px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    grid-template-columns: 78px 158px;
     width: auto;
-    max-width: calc(100% - 132px);
+    max-width: calc(100% - 20px);
   }
 
   .table-stage-status span {
     min-height: 30px;
     padding: 6px 8px;
-    font-size: 0.54rem;
+    font-size: clamp(0.48rem, 1.8vw, 0.62rem);
     letter-spacing: 0.06em;
   }
 
   .table-stage-status span:last-child {
-    font-size: 0.58rem;
+    font-size: clamp(0.5rem, 2vw, 0.66rem);
   }
 
   .pot-core {
@@ -3539,13 +3558,16 @@ body.viewport-locked {
 
   .hero-seat {
     width: calc(100% - 12px);
-    bottom: 14px;
-    gap: 6px;
+    bottom: 2px;
+    gap: 4px;
   }
 
   .hand-cards {
-    min-height: 72px;
-    gap: 6px;
+    min-height: 48px;
+    gap: 4px;
+    transform: translateY(30px);
+    position: relative;
+    z-index: 3;
   }
 
   .hero-card-corner {
@@ -3567,9 +3589,11 @@ body.viewport-locked {
 
   .hero-seat-panel {
     width: 100%;
-    min-height: 86px;
-    padding: 6px 8px;
+    min-height: 62px;
+    padding: 4px 6px;
     border-radius: 12px;
+    position: relative;
+    z-index: 2;
   }
 
   .hero-seat-panel-top {
@@ -3580,26 +3604,35 @@ body.viewport-locked {
   }
 
   .hero-seat-name {
-    font-size: 0.82rem;
+    font-size: clamp(0.78rem, 2.8vw, 0.95rem);
   }
 
   .hero-seat-stack {
-    font-size: 0.88rem;
+    font-size: clamp(0.82rem, 3vw, 1rem);
+  }
+
+  .hero-seat-kicker {
+    font-size: clamp(0.5rem, 1.8vw, 0.62rem);
   }
 
   .hand-status-chip {
-    padding: 4px 6px;
-    font-size: 0.48rem;
+    font-size: clamp(0.48rem, 1.8vw, 0.62rem);
   }
 
   .hand-insight-title {
-    font-size: 0.78rem;
+    font-size: clamp(0.72rem, 2.6vw, 0.9rem);
   }
 
   .hand-insight-copy,
   .discard-prompt {
-    font-size: 0.62rem;
-    margin-top: 4px;
+    font-size: clamp(0.62rem, 2.2vw, 0.78rem);
+    margin-top: 2px;
+  }
+
+  .hand-insight .accent-copy,
+  .hand-insight .hand-insight-copy-tight,
+  .hand-insight .hand-insight-divider {
+    font-size: clamp(0.6rem, 2.1vw, 0.76rem);
   }
 
   .winner-toast,
@@ -3703,9 +3736,9 @@ body.viewport-locked {
     --table-width: calc(100vw - 12px);
     --table-height: min(50vh, 410px);
     --seat-width: 56px;
-    --seat-avatar-size: 30px;
-    --seat-card-width: 9px;
-    --seat-card-height: 14px;
+    --seat-avatar-size: 26px;
+    --seat-card-width: 11px;
+    --seat-card-height: 17px;
   }
 
   .game-table-oval {
@@ -3713,11 +3746,20 @@ body.viewport-locked {
   }
 
   .table-stage-status {
-    width: calc(100% - 104px);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(78vw, 220px);
+    grid-template-columns: minmax(0, 1fr);
+    max-width: min(78vw, 220px);
   }
 
   .table-stage-status span:first-child {
     display: none;
+  }
+
+  .table-stage-status span:last-child {
+    width: 100%;
   }
 
   .pot-core {

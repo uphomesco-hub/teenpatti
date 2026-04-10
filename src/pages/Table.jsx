@@ -102,16 +102,16 @@ const TABLE_LAYOUTS = {
 };
 
 const MOBILE_TABLE_POSITIONS = [
-  { bottom: '30%', left: '3%' },
+  { bottom: '38%', left: '3%' },
   { top: '46%', left: '1%' },
   { top: '32%', left: '1%' },
   { top: '18%', left: '3%' },
   { top: '18%', right: '3%' },
   { top: '32%', right: '1%' },
   { top: '46%', right: '1%' },
-  { bottom: '30%', right: '3%' },
-  { bottom: '18%', right: '10%' },
-  { bottom: '18%', left: '10%' },
+  { bottom: '38%', right: '3%' },
+  { bottom: '26%', right: '10%' },
+  { bottom: '26%', left: '10%' },
 ];
 
 const MOBILE_TABLE_LAYOUTS = {
@@ -126,67 +126,67 @@ const MOBILE_TABLE_LAYOUTS = {
     { top: '34%', right: '1%' },
   ],
   4: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
-    { bottom: '30%', right: '3%' },
+    { bottom: '38%', right: '3%' },
   ],
   5: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '37%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '37%', right: '1%' },
-    { bottom: '30%', right: '3%' },
+    { bottom: '38%', right: '3%' },
   ],
   6: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '42%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
     { top: '42%', right: '1%' },
-    { bottom: '30%', right: '3%' },
+    { bottom: '38%', right: '3%' },
   ],
   7: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '46%', left: '1%' },
     { top: '30%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '30%', right: '1%' },
     { top: '46%', right: '1%' },
-    { bottom: '30%', right: '3%' },
+    { bottom: '38%', right: '3%' },
   ],
   8: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '46%', left: '1%' },
     { top: '32%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
     { top: '32%', right: '1%' },
     { top: '46%', right: '1%' },
-    { bottom: '30%', right: '3%' },
+    { bottom: '38%', right: '3%' },
   ],
   9: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '46%', left: '1%' },
     { top: '32%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
     { top: '32%', right: '1%' },
     { top: '46%', right: '1%' },
-    { bottom: '30%', right: '3%' },
-    { bottom: '18%', right: '10%' },
+    { bottom: '38%', right: '3%' },
+    { bottom: '26%', right: '10%' },
   ],
   10: [
-    { bottom: '30%', left: '3%' },
+    { bottom: '38%', left: '3%' },
     { top: '46%', left: '1%' },
     { top: '32%', left: '1%' },
     { top: '18%', left: '3%' },
     { top: '18%', right: '3%' },
     { top: '32%', right: '1%' },
     { top: '46%', right: '1%' },
-    { bottom: '30%', right: '3%' },
-    { bottom: '18%', right: '10%' },
-    { bottom: '18%', left: '10%' },
+    { bottom: '38%', right: '3%' },
+    { bottom: '26%', right: '10%' },
+    { bottom: '26%', left: '10%' },
   ],
 };
 
@@ -812,6 +812,7 @@ function GameView({
   const raiseInputValue = raiseDraft.key === raiseControlKey
     ? raiseDraft.value
     : String(actions.raiseAmount || actions.minRaiseAmount || '');
+  const heroCardLift = isCompactMobile ? '0' : '-10px';
   const parsedRaiseAmount = Number(raiseInputValue);
   const isRaiseAmountValid =
     Boolean(String(raiseInputValue).trim()) &&
@@ -1118,7 +1119,7 @@ function GameView({
                   <button
                     key={card.id}
                     className={`hero-card ${selectedDiscards.includes(card.id) ? 'hero-card-selected' : ''}`}
-                    style={{ transform: `translateY(${index % 2 === 1 ? '-10px' : '0'}) rotate(${(index - 1.5) * 5}deg)` }}
+                    style={{ transform: `translateY(${index % 2 === 1 ? heroCardLift : '0'}) rotate(${(index - 1.5) * 5}deg)` }}
                     onClick={() => (actions.canDiscard ? onToggleDiscard(card.id) : null)}
                   >
                     <span className={`hero-card-corner ${isRedSuit(card.suitSymbol) ? 'hero-card-corner-red' : ''}`}>{card.label}</span>
@@ -1131,7 +1132,7 @@ function GameView({
                   <div
                     key={`hidden-${index}`}
                     className="hero-card hero-card-hidden"
-                    style={{ transform: `translateY(${index % 2 === 1 ? '-10px' : '0'}) rotate(${(index - 1.5) * 5}deg)` }}
+                    style={{ transform: `translateY(${index % 2 === 1 ? heroCardLift : '0'}) rotate(${(index - 1.5) * 5}deg)` }}
                   >
                     <span className="hero-card-back-pattern" />
                   </div>
@@ -1144,8 +1145,22 @@ function GameView({
                 <div className="hero-seat-kicker">Your Seat</div>
                 <div className="hero-seat-name">{me?.name || 'Player'}</div>
               </div>
-              <div className="hero-seat-stack">{formatExactChips(me?.chips)}</div>
-              <div className="hand-status-chip">{me?.hasSeenCards ? 'Seen' : 'Blind'}</div>
+              <div className="hero-seat-stack-group">
+                <div className="hero-seat-stack">{formatExactChips(me?.chips)}</div>
+                {me?.status === 'packed' ? (
+                  <span className="hero-seat-state-icon material-symbols-outlined" title="Folded">
+                    do_not_disturb_on
+                  </span>
+                ) : null}
+                {me?.id === winnerPlayer?.id ? (
+                  <span className="hero-seat-state-icon material-symbols-outlined" title="Winner">
+                    emoji_events
+                  </span>
+                ) : null}
+              </div>
+              <div className="hero-seat-statuses">
+                <div className="hand-status-chip">{me?.hasSeenCards ? 'Seen' : 'Blind'}</div>
+              </div>
             </div>
 
             {canSeeOwnCards ? (
@@ -1235,13 +1250,13 @@ function GameView({
               <div className="side-show-reveal-hand">
                 <strong>{sideShowReveal.requestorName}</strong>
                 <span>
-                  {sideShowReveal.requestorCards.map((card) => card.label).join(' ') || sideShowReveal.requestorHandLabel}
+                  {(sideShowReveal.requestorCards || []).map((card) => card.label).join(' ') || sideShowReveal.requestorHandLabel}
                 </span>
               </div>
               <div className="side-show-reveal-hand">
                 <strong>{sideShowReveal.targetName}</strong>
                 <span>
-                  {sideShowReveal.targetCards.map((card) => card.label).join(' ') || sideShowReveal.targetHandLabel}
+                  {(sideShowReveal.targetCards || []).map((card) => card.label).join(' ') || sideShowReveal.targetHandLabel}
                 </span>
               </div>
             </div>
