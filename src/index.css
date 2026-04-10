@@ -1634,6 +1634,11 @@ body.viewport-locked {
   justify-content: flex-start;
 }
 
+.mobile-setup-toggle {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .lobby-info-strip {
   margin-top: 10px;
   padding: 10px 12px;
@@ -3266,9 +3271,13 @@ body.viewport-locked {
 
   .lounge-shell-lobby,
   .lounge-shell-game {
-    height: 100dvh;
+    height: auto;
     min-height: 100dvh;
-    overflow: hidden;
+  }
+
+  .lounge-shell-lobby {
+    overflow: auto;
+    grid-template-rows: auto auto;
   }
 
   .lounge-topbar {
@@ -3299,7 +3308,8 @@ body.viewport-locked {
     gap: 12px;
     height: auto;
     min-height: 100%;
-    overflow: auto;
+    overflow: visible;
+    padding-bottom: calc(132px + env(safe-area-inset-bottom));
   }
 
   .lobby-left {
@@ -3311,7 +3321,8 @@ body.viewport-locked {
     height: auto;
     min-height: 0;
     overflow: visible;
-    grid-template-rows: auto minmax(220px, auto) auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
   .lobby-heading h1 {
@@ -3337,8 +3348,9 @@ body.viewport-locked {
   }
 
   .guest-list {
-    max-height: 48dvh;
+    max-height: none;
     overflow: auto;
+    padding-bottom: 0;
   }
 
   .guest-row {
@@ -3354,6 +3366,19 @@ body.viewport-locked {
   .invite-code {
     font-size: 1.15rem;
     letter-spacing: 0.16em;
+  }
+
+  .lobby-start-button {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    width: auto;
+    justify-content: center;
+    min-height: 48px;
+    z-index: 80;
+    border-radius: 10px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.36);
   }
 
   .game-main {

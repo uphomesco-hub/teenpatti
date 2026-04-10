@@ -459,6 +459,7 @@ function Table() {
       {isLobby ? (
         <LobbyView
           roomState={roomState}
+          isCompactMobile={isCompactMobile}
           configDraft={configDraft}
           presets={presets}
           chipDrafts={chipDrafts}
@@ -509,6 +510,7 @@ function Table() {
 
 function LobbyView({
   roomState,
+  isCompactMobile,
   configDraft,
   presets,
   chipDrafts,
@@ -525,6 +527,12 @@ function LobbyView({
   const canEdit = Boolean(roomState?.you?.isHost);
   const draftPreset = detectPreset(configDraft);
   const livePreset = detectPreset(roomState?.config);
+  const [showMobileSetup, setShowMobileSetup] = useState(() => !isCompactMobile);
+  const showSetupControls = !isCompactMobile || showMobileSetup;
+
+  useEffect(() => {
+    setShowMobileSetup(!isCompactMobile);
+  }, [isCompactMobile]);
 
   return (
     <main className="lobby-main lobby-main-full">
@@ -541,6 +549,24 @@ function LobbyView({
         <div className="glass-card lobby-config-card">
           {canEdit ? (
             <>
+              {isCompactMobile ? (
+                <div className="mobile-setup-toggle">
+                  <button
+                    className="lounge-cta lounge-cta-secondary"
+                    onClick={() => setShowMobileSetup((current) => !current)}
+                  >
+                    {showSetupControls ? 'Hide Setup' : 'Edit Setup'}
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="rules-summary-card">
+                <div className="rules-summary-kicker">Current table shape</div>
+                {renderVariationSummary(configDraft)}
+              </div>
+
+              {showSetupControls ? (
+                <>
               <label className="lounge-field">
                 <span>Variation Preset</span>
                 <select
@@ -615,11 +641,6 @@ function LobbyView({
                 best-fit wildcards.
               </div>
 
-              <div className="rules-summary-card">
-                <div className="rules-summary-kicker">Current table shape</div>
-                {renderVariationSummary(configDraft)}
-              </div>
-
               <JokerConfigurator
                 configDraft={configDraft}
                 onSetConfigDraft={onSetConfigDraft}
@@ -636,6 +657,8 @@ function LobbyView({
                   Save Table Rules
                 </button>
               </div>
+                </>
+              ) : null}
             </>
           ) : (
             <>
