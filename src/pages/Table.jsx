@@ -546,6 +546,17 @@ function LobbyView({
   const livePreset = detectPreset(roomState?.config);
   const [showMobileSetup, setShowMobileSetup] = useState(false);
   const showSetupControls = !isCompactMobile || showMobileSetup;
+  const bootAmount = Number(configDraft?.bootAmount || roomState?.config?.bootAmount || 0);
+  const minimumPlayers = Number(roomState?.config?.minPlayers || 2);
+  const readyPlayers = (roomState?.players || []).filter(
+    (player) => player.connected && Number(player.chips) >= bootAmount,
+  );
+  const canStartRound = canEdit && readyPlayers.length >= minimumPlayers;
+  const startHint = canEdit
+    ? `Need ${minimumPlayers} connected player${minimumPlayers === 1 ? '' : 's'} with at least ${formatExactChips(
+        bootAmount,
+      )} chips to start.`
+    : 'Waiting for host to start the table.';
 
   return (
     <main className="lobby-main lobby-main-full">
@@ -746,12 +757,18 @@ function LobbyView({
           </div>
 
           {canEdit ? (
-            <button className="lounge-cta lounge-cta-primary lobby-start-button" onClick={onStartRound}>
+            <button
+              className="lounge-cta lounge-cta-primary lobby-start-button"
+              onClick={onStartRound}
+              disabled={!canStartRound}
+            >
               Start Game
             </button>
           ) : (
-            <div className="lobby-start-hint">Waiting for host to start the table.</div>
+            <div className="lobby-start-hint">{startHint}</div>
           )}
+
+          {canEdit && !canStartRound ? <div className="lobby-start-hint">{startHint}</div> : null}
 
           <div className="invite-card">
             <div className="invite-label">Private Invite Code</div>
