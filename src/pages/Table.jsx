@@ -444,7 +444,24 @@ function Table() {
   }, [isLobby]);
 
   if (!roomState) {
-    return <div className="lounge-shell lounge-loading">Connecting to table...</div>;
+    return (
+      <div className="lounge-shell lounge-loading">
+        <div>Connecting to table...</div>
+        {error ? (
+          <div className="lounge-loading-panel">
+            <div className="lounge-error">{error}</div>
+            <div className="lounge-loading-actions">
+              <button className="lounge-cta lounge-cta-secondary" onClick={() => window.location.reload()}>
+                Retry
+              </button>
+              <button className="lounge-cta lounge-cta-ghost" onClick={() => navigate(`/?join=${normalizedRoomId}`)}>
+                Enter Code
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   return (

@@ -1261,6 +1261,22 @@ body.viewport-locked {
 .lounge-loading {
   display: grid;
   place-items: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.lounge-loading-panel {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+}
+
+.lounge-loading-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .lounge-topbar {
