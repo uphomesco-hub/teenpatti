@@ -1,11 +1,11 @@
 # Teen Patti
 
-Peer-hosted Teen Patti prototype built with React, Vite, and PeerJS.
+Server-hosted Teen Patti built with React, Vite, Node, and WebSockets.
 
 ## What is implemented
 
 - Private room creation and join flow with room-code invites
-- Host-authoritative WebRTC transport inspired by the `monopoly deal` reference app
+- Server-authoritative WebSocket transport, so rooms do not depend on the host browser tab
 - Single-screen table UI
   - center felt table
   - pot, boot, stake, turn, and controller in the middle
@@ -34,8 +34,8 @@ Peer-hosted Teen Patti prototype built with React, Vite, and PeerJS.
 
 ## Notes
 
-- The host tab is authoritative. If the host closes the tab, the room closes.
-- This is a strong first pass, not a finished production game.
+- The Node server is authoritative. If a player closes their tab, the room stays on the server and the player can reconnect with the stored token.
+- Rooms are kept in memory. A process restart clears active tables.
 - Betting flow is implemented around a simplified Teen Patti stake model:
   - blind call = current stake
   - blind raise = 2x current stake
@@ -44,27 +44,55 @@ Peer-hosted Teen Patti prototype built with React, Vite, and PeerJS.
 
 ## Local development
 
+Run the WebSocket server in one terminal:
+
 ```bash
-npm install
+npm run dev:server
+```
+
+Run the Vite frontend in another terminal:
+
+```bash
 npm run dev
 ```
 
-Open the Vite URL from the terminal.
+The development frontend connects to `ws://localhost:8787/ws` by default.
 
-## TURN relay configuration
+## Production
 
-The game uses PeerJS/WebRTC. STUN is enabled by default, but stricter networks can still fail to connect unless a TURN
-relay is configured. Add these values in `.env.local` for local development, and add the same `VITE_` variables in the
-deployment environment:
+Build and run one server that serves both the frontend and WebSocket endpoint:
 
 ```bash
-VITE_TURN_URLS=turn:turn.example.com:3478,turns:turn.example.com:5349
-VITE_TURN_USERNAME=your-turn-username
-VITE_TURN_CREDENTIAL=your-turn-password
+npm ci
+npm run build
+npm start
 ```
 
-Use credentials from a real TURN provider or a self-hosted `coturn` server. Without these values, the app falls back to
-the existing STUN-only setup.
+The server listens on `PORT` and exposes:
+
+- `/` for the built React app
+- `/ws` for WebSocket multiplayer
+- `/health` for load balancer health checks
+
+When the frontend is served from a separate host, set:
+
+```bash
+VITE_WS_URL=wss://your-game-domain.example.com/ws
+```
+
+## AWS hosting notes
+
+Use one always-on Node runtime that supports WebSocket upgrades, such as EC2, ECS/Fargate, Lightsail containers, Elastic Beanstalk, or App Runner. Static-only services like S3 website hosting are not enough for multiplayer because `/ws` must stay connected.
+
+Server rules:
+
+- expose the app on `PORT` and forward HTTPS WebSocket upgrades to `/ws`
+- use sticky sessions if you run more than one instance, or add shared room storage before horizontal scaling
+- keep `/health` as the load balancer health check path
+- run the process under a restart policy
+- terminate TLS at the load balancer/reverse proxy so browsers use `wss://`
+
+The included `Dockerfile` builds the Vite app and runs `npm start`, so it can be deployed directly to an AWS container service.
 
 ## Verification
 

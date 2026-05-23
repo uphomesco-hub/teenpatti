@@ -527,12 +527,8 @@ function LobbyView({
   const canEdit = Boolean(roomState?.you?.isHost);
   const draftPreset = detectPreset(configDraft);
   const livePreset = detectPreset(roomState?.config);
-  const [showMobileSetup, setShowMobileSetup] = useState(() => !isCompactMobile);
+  const [showMobileSetup, setShowMobileSetup] = useState(false);
   const showSetupControls = !isCompactMobile || showMobileSetup;
-
-  useEffect(() => {
-    setShowMobileSetup(!isCompactMobile);
-  }, [isCompactMobile]);
 
   return (
     <main className="lobby-main lobby-main-full">

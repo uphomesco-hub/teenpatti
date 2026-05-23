@@ -1,6 +1,6 @@
-import { createDeck, formatRank, RANKS, SUITS } from './cards';
-import { compareTeenPattiHands, evaluateBestTeenPattiHand } from './evaluator';
-import { buildConfigFromPreset, normalizeConfig } from './variants';
+import { createDeck, formatRank, RANKS, SUITS } from './cards.js';
+import { compareTeenPattiHands, evaluateBestTeenPattiHand } from './evaluator.js';
+import { buildConfigFromPreset, normalizeConfig } from './variants.js';
 
 const TURN_DURATION_MS = 30_000;
 

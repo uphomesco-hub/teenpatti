@@ -1,4 +1,4 @@
-import { formatRank, RANKS, SUITS } from './cards';
+import { formatRank, RANKS, SUITS } from './cards.js';
 
 const CATEGORY_ORDER = {
   highCard: 1,
