@@ -21,7 +21,8 @@ function getServerUrl() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const isViteDevHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
   const host = isViteDevHost ? `${window.location.hostname}:8787` : window.location.host;
-  return `${protocol}//${host}/ws`;
+  const basePath = String(import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  return `${protocol}//${host}${basePath}/ws`;
 }
 
 export function getTransportErrorMessage(error) {
