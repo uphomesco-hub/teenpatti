@@ -21,6 +21,7 @@ import {
 } from '../src/game/engine.js';
 
 const PORT = Number(process.env.PORT || 8787);
+const HOST = process.env.HOST || '0.0.0.0';
 const ROOM_TTL_MS = Number(process.env.ROOM_TTL_MS || 6 * 60 * 60 * 1000);
 const SIDE_SHOW_REVEAL_MS = 10_000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -533,8 +534,8 @@ setInterval(() => {
   }
 }, 60_000);
 
-server.listen(PORT, () => {
-  console.log(`Teen Patti server listening on :${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Teen Patti server listening on ${HOST}:${PORT}`);
 });
 
 function shutdown() {
