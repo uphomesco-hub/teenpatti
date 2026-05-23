@@ -542,8 +542,12 @@ function shutdown() {
   for (const roomId of rooms.keys()) {
     deleteRoom(roomId);
   }
+  for (const client of wss.clients) {
+    client.terminate();
+  }
   wss.close();
   server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 3000).unref();
 }
 
 process.on('SIGTERM', shutdown);
