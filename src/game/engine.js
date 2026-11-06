@@ -344,6 +344,19 @@ function finishRound(room, winnerPlayer, reason) {
   winnerPlayer.showCardsAfterRound = true;
 
   pushHistory(room, `${winnerPlayer.name} won ${room.round.pot} chips. ${reason}`);
+  for (const player of room.players) {
+    if (player.status !== 'waiting') {
+      markBustedIfNeeded(room, player);
+    }
+  }
+}
+
+function markBustedIfNeeded(room, player) {
+  if (player.chips < room.config.bootAmount && player.status !== 'busted') {
+    player.status = 'busted';
+    player.pendingDiscardCount = 0;
+    pushHistory(room, `${player.name} is out of chips. Rejoin with a fresh stack to play the next hand.`);
+  }
 }
 
 function maybeFinishRound(room) {
@@ -399,7 +412,7 @@ function clearRoundState(room) {
   room.drawPile = [];
   room.winnerId = null;
   room.players.forEach((player) => {
-    player.status = player.chips > 0 ? 'waiting' : 'busted';
+    player.status = player.status === 'busted' || player.chips < room.config.bootAmount ? 'busted' : 'waiting';
     player.hasSeenCards = false;
     player.hand = [];
     player.discarded = [];
@@ -438,7 +451,7 @@ function getRaiseAmount(room, player) {
 }
 
 function debitPlayer(player, amount) {
-  if (player.chips < amount) {
+  if (!Number.isSafeInteger(amount) || amount <= 0 || !Number.isSafeInteger(player.chips - amount)) {
     return false;
   }
 
@@ -624,6 +637,7 @@ export function handleTurnTimeout(room, now = Date.now()) {
     }
 
     player.status = 'packed';
+    markBustedIfNeeded(room, player);
     pushHistory(room, `${player.name} timed out and packed.`);
   }
 
@@ -648,7 +662,7 @@ export function updateConfig(room, playerId, payload) {
   const startingChipsChanged = nextConfig.startingChips !== previousStartingChips;
   room.config = nextConfig;
 
-  if (startingChipsChanged) {
+  if (startingChipsChanged && room.phase === 'lobby') {
     for (const player of room.players) {
       player.chips = room.config.startingChips;
     }
@@ -663,13 +677,21 @@ export function setPlayerChips(room, playerId, targetPlayerId, chips) {
     return { error: 'Only the host can set player chips.' };
   }
 
+  if (room.phase !== 'lobby' && room.phase !== 'finished') {
+    return { error: 'Player chips can only be allocated between hands.' };
+  }
+
   const target = getPlayer(room, targetPlayerId);
   if (!target) {
     return { error: 'Player not found.' };
   }
 
-  target.chips = Math.max(0, Number(chips) || 0);
-  target.status = target.chips > 0 ? 'waiting' : 'busted';
+  const amount = Number(chips);
+  if (!Number.isSafeInteger(amount) || amount < 0) {
+    return { error: 'Chips must be a non-negative whole number.' };
+  }
+  target.chips = amount;
+  target.status = target.chips >= room.config.bootAmount ? 'waiting' : 'busted';
   pushHistory(room, `${target.name} now has ${target.chips} chips.`);
   return { ok: true };
 }
@@ -677,6 +699,17 @@ export function setPlayerChips(room, playerId, targetPlayerId, chips) {
 export function startRound(room, playerId) {
   if (playerId !== room.hostPlayerId) {
     return { error: 'Only the host can start the game.' };
+  }
+
+  if (room.phase !== 'lobby' && room.phase !== 'finished') {
+    return { error: 'Finish the current hand before starting another.' };
+  }
+
+  const eligiblePlayers = room.players
+    .filter((player) => player.connected && player.status !== 'busted' && player.chips >= room.config.bootAmount)
+    .sort((left, right) => left.seat - right.seat);
+  if (eligiblePlayers.length < room.config.minPlayers) {
+    return { error: 'At least 2 connected players with enough chips for boot are required. Out-of-chips players must rejoin.' };
   }
 
   const hadPreviousRound = Boolean(room.round);
@@ -688,13 +721,6 @@ export function startRound(room, playerId) {
   clearRoundState(room);
   ensureController(room);
   assignSeats(room);
-
-  const eligiblePlayers = room.players
-    .filter((player) => player.chips >= room.config.bootAmount)
-    .sort((left, right) => left.seat - right.seat);
-  if (eligiblePlayers.length < room.config.minPlayers) {
-    return { error: 'At least 2 players with enough chips for boot are required.' };
-  }
 
   const firstDealer = eligiblePlayers.find((player) => player.id === room.hostPlayerId) || eligiblePlayers[0];
   const dealer = hadPreviousRound
@@ -730,7 +756,7 @@ export function startRound(room, playerId) {
 
   for (const player of room.players) {
     if (!eligiblePlayers.some((entry) => entry.id === player.id)) {
-      player.status = player.chips > 0 ? 'waiting' : 'busted';
+      player.status = player.status === 'busted' || player.chips < room.config.bootAmount ? 'busted' : 'waiting';
       continue;
     }
 
@@ -893,6 +919,7 @@ function handlePack(room, player) {
   }
 
   player.status = 'packed';
+  markBustedIfNeeded(room, player);
   pushHistory(room, `${player.name} packed.`);
   advanceTurn(room, player.id);
   return { ok: true };
@@ -1030,8 +1057,23 @@ export function handleCommand(room, playerId, type, payload = {}) {
     return { error: 'Player session not found.' };
   }
 
+  if (type === 'rejoin') {
+    if (player.status !== 'busted') {
+      return { error: 'Only out-of-chips players can rejoin with a fresh stack.' };
+    }
+    player.chips = room.config.startingChips;
+    player.status = 'waiting';
+    player.pendingDiscardCount = 0;
+    pushHistory(room, `${player.name} rejoined with ${player.chips} chips and will play next hand.`);
+    return { ok: true };
+  }
+
   if (!room.round) {
     return { error: 'The round has not started yet.' };
+  }
+
+  if (!isActivePlayer(player) && type !== 'set_card_reveal') {
+    return { error: 'You are sitting out this hand. Rejoin if out of chips and wait for the next hand.' };
   }
 
   if (room.sideShowReveal && type !== 'set_card_reveal') {
@@ -1077,18 +1119,17 @@ function getAvailableActions(room, player) {
   const canSetCardReveal = room.phase === 'finished' && player.hand.length > 0 && !cardsForcedOpen;
 
   return {
-    canDiscard: room.phase === 'betting' && player.pendingDiscardCount > 0 && player.hasSeenCards,
-    canLook: room.phase === 'betting' && !player.hasSeenCards && (isTurn || player.pendingDiscardCount > 0),
+    canRejoin: player.status === 'busted',
+    canDiscard: room.phase === 'betting' && isActivePlayer(player) && player.pendingDiscardCount > 0 && player.hasSeenCards,
+    canLook: room.phase === 'betting' && isActivePlayer(player) && !player.hasSeenCards && (isTurn || player.pendingDiscardCount > 0),
     canCall:
       room.phase === 'betting' &&
       isTurn &&
-      (player.status === 'active' || player.status === 'seen') &&
-      player.chips >= callAmount,
+      isActivePlayer(player),
     canRaise:
       room.phase === 'betting' &&
       isTurn &&
-      (player.status === 'active' || player.status === 'seen') &&
-      player.chips >= minRaiseAmount,
+      isActivePlayer(player),
     canPack: room.phase === 'betting' && isTurn && (player.status === 'active' || player.status === 'seen'),
     canRequestSideShow:
       room.phase === 'betting' &&
@@ -1097,13 +1138,13 @@ function getAvailableActions(room, player) {
       player.hasSeenCards &&
       activeCount > 2 &&
       Boolean(sideShowTarget) &&
-      player.chips >= callAmount,
+      isActivePlayer(player),
     canShow:
       room.phase === 'betting' &&
       isTurn &&
       room.config.showEnabled &&
       activeCount === 2 &&
-      player.chips >= callAmount,
+      isActivePlayer(player),
     canSetCardReveal,
     cardsForcedOpen,
     showCardsAfterRound: player.showCardsAfterRound,
@@ -1111,7 +1152,7 @@ function getAvailableActions(room, player) {
     callAmount,
     raiseAmount: room.round ? getRaiseAmount(room, player) : 0,
     minRaiseAmount,
-    maxRaiseAmount: player.chips,
+    maxRaiseAmount: Math.max(player.chips, room.round ? getRaiseAmount(room, player) : 0),
     raiseStep: getRaiseStep(player),
   };
 }
@@ -1246,6 +1287,7 @@ export function finalizeSideShowReveal(room) {
 
   if (loser) {
     loser.status = 'packed';
+    markBustedIfNeeded(room, loser);
   }
 
   pushHistory(room, `${loser?.name || 'A player'} packed after the side show. ${winner?.name || 'The winner'} won the comparison.`);

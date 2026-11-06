@@ -491,6 +491,7 @@ function Table() {
           onSaveRules={saveRules}
           onUpdatePlayerStack={updatePlayerStack}
           onStartRound={startRound}
+          onRejoin={() => submitCommand('rejoin')}
           error={error}
         />
       ) : (
@@ -539,6 +540,7 @@ function LobbyView({
   onSaveRules,
   onUpdatePlayerStack,
   onStartRound,
+  onRejoin,
   error,
 }) {
   const canEdit = Boolean(roomState?.you?.isHost);
@@ -549,7 +551,7 @@ function LobbyView({
   const bootAmount = Number(configDraft?.bootAmount || roomState?.config?.bootAmount || 0);
   const minimumPlayers = Number(roomState?.config?.minPlayers || 2);
   const readyPlayers = (roomState?.players || []).filter(
-    (player) => player.connected && Number(player.chips) >= bootAmount,
+    (player) => player.connected && player.status !== 'busted' && Number(player.chips) >= bootAmount,
   );
   const canStartRound = canEdit && readyPlayers.length >= minimumPlayers;
   const startHint = canEdit
@@ -770,6 +772,12 @@ function LobbyView({
 
           {canEdit && !canStartRound ? <div className="lobby-start-hint">{startHint}</div> : null}
 
+          {roomState.you?.availableActions?.canRejoin ? (
+            <button className="lounge-cta lounge-cta-primary" onClick={onRejoin}>
+              Rejoin with {formatExactChips(roomState.config.startingChips)} chips
+            </button>
+          ) : null}
+
           <div className="invite-card">
             <div className="invite-label">Private Invite Code</div>
             <div className="invite-code">{roomState.id}</div>
@@ -939,7 +947,7 @@ function GameView({
         }
       : null,
   ].filter(Boolean);
-  const canUseFooterActions = canAct || actions.canLook || actions.canDiscard || canToggleOwnReveal || canStartNextRound;
+  const canUseFooterActions = canAct || actions.canLook || actions.canDiscard || actions.canRejoin || canToggleOwnReveal || canStartNextRound;
 
   return (
     <main className="game-main game-main-full">
@@ -1315,6 +1323,14 @@ function GameView({
         <div className="control-buttons">
           {canUseFooterActions ? (
             <>
+              {actions.canRejoin ? (
+                <>
+                  <span className="turn-wait">Out of chips. Rejoin to play the next hand.</span>
+                  <button className="control-btn control-btn-gold" onClick={() => onSubmitCommand('rejoin')}>
+                    Rejoin with {formatExactChips(roomState.config.startingChips)} chips
+                  </button>
+                </>
+              ) : null}
               {canToggleOwnReveal ? (
                 <button
                   className="control-btn control-btn-dark"
@@ -1790,6 +1806,9 @@ function formatExactChips(value) {
 function labelForPlayerState(player) {
   if (player.status === 'waiting') {
     return 'Next Hand';
+  }
+  if (player.status === 'busted') {
+    return 'Out • Rejoin';
   }
   if (player.status === 'packed') {
     return 'Folded';

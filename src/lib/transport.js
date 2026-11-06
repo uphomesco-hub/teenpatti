@@ -12,16 +12,33 @@ const KNOWN_COMMANDS = new Set([
   'game_command',
 ]);
 
-function getServerUrl() {
+async function getServerUrl() {
   const configuredUrl = String(import.meta.env.VITE_WS_URL || '').trim();
   if (configuredUrl) {
     return configuredUrl;
   }
 
+  // The permanent Pages address discovers the current tunnel back to the PC.
+  if (window.location.hostname === 'uphomesco-hub.github.io') {
+    const response = await fetch(
+      `https://raw.githubusercontent.com/uphomesco-hub/teenpatti/pc-host/server.json?t=${Date.now()}`,
+      { cache: 'no-store', signal: AbortSignal.timeout(8000) },
+    );
+    if (!response.ok) {
+      throw new Error('The PC game server is unavailable. Ask the host to check that their PC is online.');
+    }
+    const directory = await response.json();
+    const serverUrl = new URL(directory.url);
+    if (serverUrl.protocol !== 'https:' || !serverUrl.hostname.endsWith('.trycloudflare.com')) {
+      throw new Error('The PC game server address is invalid. Ask the host to restart the server.');
+    }
+    return `wss://${serverUrl.host}/ws`;
+  }
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const isViteDevHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+  const isViteDevHost = import.meta.env.DEV && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
   const host = isViteDevHost ? `${window.location.hostname}:8787` : window.location.host;
-  const basePath = String(import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  const basePath = new URL(import.meta.env.BASE_URL || '/', window.location.href).pathname.replace(/\/$/, '');
   return `${protocol}//${host}${basePath}/ws`;
 }
 
@@ -101,8 +118,8 @@ class WebSocketTransport {
       return this.connectPromise;
     }
 
-    this.connectPromise = new Promise((resolve, reject) => {
-      const ws = new WebSocket(getServerUrl());
+    this.connectPromise = getServerUrl().then((url) => new Promise((resolve, reject) => {
+      const ws = new WebSocket(url);
       this.ws = ws;
 
       const timeoutId = window.setTimeout(() => {
@@ -136,6 +153,9 @@ class WebSocketTransport {
       ws.addEventListener('error', () => {
         reject(new Error(SIGNALING_ERROR_MESSAGE));
       });
+    })).catch((error) => {
+      this.connectPromise = null;
+      throw error;
     });
 
     return this.connectPromise;

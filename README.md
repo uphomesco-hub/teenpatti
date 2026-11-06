@@ -36,6 +36,12 @@ Server-hosted Teen Patti built with React, Vite, Node, and WebSockets.
 
 - The Node server is authoritative. If a player closes their tab, the room stays on the server and the player can reconnect with the stored token.
 - Rooms are kept in memory. A process restart clears active tables.
+- Players may go below zero during the current hand. Winning the pot first
+  offsets their negative balance. Losing, packing, or timing out with less than
+  the next boot removes them from play until they choose **Rejoin**. Rejoining
+  gives them the configured starting chips and queues them for the next hand.
+- Host chip allocations are allowed only between hands. Changing starting chips
+  after play begins affects new joins/rejoins, preserving existing balances.
 - Betting flow is implemented around a simplified Teen Patti stake model:
   - blind call = current stake
   - blind raise = 2x current stake
@@ -80,7 +86,53 @@ When the frontend is served from a separate host, set:
 VITE_WS_URL=wss://your-game-domain.example.com/ws
 ```
 
-## AWS hosting notes
+## Hosting from your PC (macOS)
+
+Permanent game link: **https://uphomesco-hub.github.io/teenpatti/**
+
+GitHub Pages serves the game interface. The authoritative game server runs on
+your PC, reached through a Cloudflare Quick Tunnel. Invite links keep the same
+Pages address. The frontend discovers the current tunnel from the public
+`server.json` on this repository's `pc-host` branch. No AWS service is required.
+
+Install once, using Node, the GitHub CLI signed in to this repository, and cloudflared:
+
+```bash
+brew install cloudflared
+npm ci
+npm run build
+npm run host:install
+```
+
+The login service `com.uphomes.teenpatti.pc-host` starts the server and tunnel at
+login, restarts after a process failure, and publishes a new tunnel address when
+needed. It binds Node to `127.0.0.1:8787` and uses `caffeinate` to prevent idle
+sleep while hosting. The screen can still sleep normally. Keep the PC powered,
+logged in, connected to the internet, and the laptop lid open. Shutdown, logout,
+manual sleep, and lost internet interrupt games. Active rooms are not saved
+across server restarts. Quick Tunnels have no uptime guarantee.
+
+Logs are in `.pc-host.local/server.log` and `.pc-host.local/error.log`.
+GitHub CLI credentials stay in the existing local credential store. Only the
+public tunnel URL and its update time are published, never player data or tokens.
+
+After a code update, rebuild and restart the service between games:
+
+```bash
+npm run build
+launchctl kickstart -k gui/$(id -u)/com.uphomes.teenpatti.pc-host
+```
+
+To stop hosting and disable login startup:
+
+```bash
+launchctl bootout gui/$(id -u)/com.uphomes.teenpatti.pc-host
+```
+
+To enable it again, run `npm run host:install`. For a foreground session, use
+`npm run host:pc` with the login service stopped.
+
+## Optional AWS hosting
 
 Use one always-on Node runtime that supports WebSocket upgrades, such as EC2, ECS/Fargate, Lightsail containers, Elastic Beanstalk, or App Runner. Static-only services like S3 website hosting are not enough for multiplayer because `/ws` must stay connected.
 
@@ -99,4 +151,5 @@ The included `Dockerfile` builds the Vite app and runs `npm start`, so it can be
 ```bash
 npm run build
 npm run lint
+npm test
 ```
