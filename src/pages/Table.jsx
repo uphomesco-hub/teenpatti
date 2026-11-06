@@ -218,6 +218,7 @@ function Table() {
         return;
       }
       setRoomState(nextRoomState);
+      setError('');
       setConfigDraft(nextRoomState.config);
       setChipDrafts((current) => {
         const next = { ...current };
@@ -270,20 +271,20 @@ function Table() {
       return;
     }
 
-    if (username.trim()) {
-      attemptedJoinRef.current = true;
-      socket.emit('join_room', {
-        roomId: normalizedRoomId,
-        username: username.trim(),
-      });
-      return;
-    }
-
     if (playerToken) {
       attemptedJoinRef.current = true;
       socket.emit('reconnect_room', {
         roomId: normalizedRoomId,
         playerToken,
+      });
+      return;
+    }
+
+    if (username.trim()) {
+      attemptedJoinRef.current = true;
+      socket.emit('join_room', {
+        roomId: normalizedRoomId,
+        username: username.trim(),
       });
       return;
     }
