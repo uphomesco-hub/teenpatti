@@ -2,6 +2,7 @@ import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { sandboxedGame } from './game-sandbox.mjs';
 
 const exec = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -103,9 +104,8 @@ function stop(error) {
   setTimeout(() => process.exit(error instanceof Error ? 1 : 0), 3500);
 }
 
-const server = child(process.execPath, ['server/index.js'], {
-  env: { ...process.env, HOST: '127.0.0.1', PORT: '8787' },
-});
+const isolated = await sandboxedGame(root);
+const server = child(isolated.command, isolated.args, isolated.options);
 server.once('error', stop);
 server.once('exit', () => {
   if (!stopping) stop(new Error('Game server exited; login service will restart it.'));

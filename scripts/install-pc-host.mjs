@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, chmod } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
@@ -17,6 +17,7 @@ execFileSync('gh', ['auth', 'status'], { stdio: 'ignore' });
 execFileSync('cloudflared', ['--version'], { stdio: 'ignore' });
 await mkdir(agents, { recursive: true });
 await mkdir(logs, { recursive: true });
+await chmod(logs, 0o700);
 await writeFile(plist, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -36,6 +37,13 @@ await writeFile(plist, `<?xml version="1.0" encoding="UTF-8"?>
 </dict></plist>
 `);
 try { execFileSync('launchctl', ['bootout', `${domain}/${label}`], { stdio: 'ignore' }); } catch { /* First installation. */ }
+let unloaded = false;
+for (let attempt = 0; attempt < 40; attempt += 1) {
+  try { execFileSync('launchctl', ['print', `${domain}/${label}`], { stdio: 'ignore' }); }
+  catch { unloaded = true; break; }
+  await new Promise((resolve) => setTimeout(resolve, 250));
+}
+if (!unloaded) throw new Error('The previous login service is still stopping. Retry installation in a moment.');
 execFileSync('launchctl', ['bootstrap', domain, plist], { stdio: 'inherit' });
 console.log('Installed PC game server. Starts now and automatically at login.');
 console.log('Permanent game link: https://uphomesco-hub.github.io/teenpatti/');

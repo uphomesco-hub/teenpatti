@@ -10,9 +10,13 @@ lerna-debug.log*
 node_modules
 .playwright-cli/
 output/playwright/
+.gstack/security-reports/
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*

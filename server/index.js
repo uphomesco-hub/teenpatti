@@ -1,9 +1,10 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { readFile, realpath } from 'node:fs/promises';
+import { randomInt, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
+import { LIMITS, validMessage, createRateLimiter, allowedOrigin } from './security.js';
 import {
   createRoom as createGameRoom,
   joinRoom as joinGameRoom,
@@ -21,7 +22,7 @@ import {
 } from '../src/game/engine.js';
 
 const PORT = Number(process.env.PORT || 8787);
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || '127.0.0.1';
 const ROOM_TTL_MS = Number(process.env.ROOM_TTL_MS || 6 * 60 * 60 * 1000);
 const SIDE_SHOW_REVEAL_MS = 10_000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,15 +32,25 @@ const rooms = new Map();
 const clients = new Map();
 const sideShowTimers = new Map();
 const turnTimers = new Map();
+const allowHttp = createRateLimiter(240, 60_000);
+const allowConnection = createRateLimiter(60, 60_000);
+const allowCommand = createRateLimiter(120, 10_000);
+
+function clientIp(request) {
+  // Forwarded addresses are trusted only from the local Cloudflare connector.
+  const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(request.socket.remoteAddress);
+  const forwarded = local && request.headers['cf-connecting-ip'];
+  return typeof forwarded === 'string' && forwarded.length <= 64 ? forwarded : request.socket.remoteAddress;
+}
 
 function createSocketId() {
-  return `S-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
+  return `S-${randomUUID()}`;
 }
 
 function createRoomCode() {
   let roomId = '';
   do {
-    roomId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    roomId = Array.from({ length: 6 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[randomInt(36)]).join('');
   } while (rooms.has(roomId));
   return roomId;
 }
@@ -50,6 +61,10 @@ function normalizeRoomId(roomId) {
 
 function sendEvent(ws, event, payload = {}) {
   if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+  if (ws.bufferedAmount > 64 * 1024) {
+    ws.terminate();
     return;
   }
 
@@ -72,7 +87,8 @@ function getRoom(ws, roomId) {
 
 function resolvePlayerId(room, ws, playerToken) {
   if (ws.playerId && room.players.some((player) => player.id === ws.playerId)) {
-    return ws.playerId;
+    const player = room.players.find((entry) => entry.id === ws.playerId);
+    return player.socketId === ws.id && ws.roomId === room.id ? ws.playerId : '';
   }
 
   const player = room.players.find((entry) => entry.token === playerToken);
@@ -80,11 +96,7 @@ function resolvePlayerId(room, ws, playerToken) {
     return '';
   }
 
-  player.socketId = ws.id;
-  player.connected = true;
-  ws.roomId = room.id;
-  ws.playerId = player.id;
-  ws.playerToken = player.token;
+  attachPlayer(ws, room, player);
   return player.id;
 }
 
@@ -182,7 +194,14 @@ function handlePostCommandEffects(room, result) {
   }
 }
 
-function attachPlayer(ws, room, player) {
+function attachPlayer(ws, room, player, previousSocketId = player.socketId) {
+  const previous = clients.get(previousSocketId);
+  if (previous && previous !== ws) {
+    previous.roomId = '';
+    previous.playerId = '';
+    previous.playerToken = '';
+    previous.close(1000, 'Session moved to a new connection');
+  }
   ws.roomId = room.id;
   ws.playerId = player.id;
   ws.playerToken = player.token;
@@ -191,6 +210,10 @@ function attachPlayer(ws, room, player) {
 }
 
 function handleCreateRoom(ws, payload) {
+  if (ws.roomId || rooms.size >= LIMITS.maxRooms) {
+    sendGameError(ws, ws.roomId ? 'Leave your current table before creating another.' : 'Server is full. Try again later.');
+    return;
+  }
   const roomId = createRoomCode();
   const { room, player } = createGameRoom(ws.id, payload.username, roomId);
   room.lastTouchedAt = Date.now();
@@ -204,6 +227,10 @@ function handleCreateRoom(ws, payload) {
 }
 
 function handleJoinRoom(ws, payload) {
+  if (ws.roomId) {
+    sendGameError(ws, 'Leave your current table before joining another.');
+    return;
+  }
   const room = getRoom(ws, payload.roomId);
   if (!room) {
     return;
@@ -224,18 +251,23 @@ function handleJoinRoom(ws, payload) {
 }
 
 function handleReconnectRoom(ws, payload) {
+  if (ws.roomId && ws.roomId !== normalizeRoomId(payload.roomId)) {
+    sendGameError(ws, 'Leave your current table before reconnecting elsewhere.');
+    return;
+  }
   const room = getRoom(ws, payload.roomId);
   if (!room) {
     return;
   }
 
+  const previousSocketId = room.players.find((player) => player.token === payload.playerToken)?.socketId;
   const result = reconnectGameRoom(room, ws.id, payload.playerToken);
   if (result.error) {
     sendGameError(ws, result.error);
     return;
   }
 
-  attachPlayer(ws, room, result.player);
+  attachPlayer(ws, room, result.player, previousSocketId);
   sendEvent(ws, 'room_reconnected', {
     roomId: room.id,
     playerToken: result.player.token,
@@ -451,54 +483,117 @@ const mimeTypes = {
 };
 
 async function serveStatic(request, response) {
-  if (request.url === '/health') {
-    response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
-    response.end(JSON.stringify({ ok: true, rooms: rooms.size }));
-    return;
-  }
-
-  const url = new URL(request.url, `http://${request.headers.host}`);
-  const requestedPath = decodeURIComponent(url.pathname);
-  const safePath = requestedPath.includes('..') ? '/index.html' : requestedPath;
-  const filePath = path.join(distDir, safePath === '/' ? '/index.html' : safePath);
-  const fallbackPath = path.join(distDir, 'index.html');
-  const targetPath = existsSync(filePath) ? filePath : fallbackPath;
-
+  response.setHeader('x-content-type-options', 'nosniff');
+  response.setHeader('x-frame-options', 'DENY');
+  response.setHeader('referrer-policy', 'no-referrer');
+  response.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()');
+  response.setHeader('content-security-policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
   try {
+    if (!allowHttp(clientIp(request))) {
+      response.writeHead(429, { 'retry-after': '60' });
+      response.end('Too many requests.');
+      return;
+    }
+    if (!['GET', 'HEAD'].includes(request.method)) {
+      response.writeHead(405, { allow: 'GET, HEAD', connection: 'close' });
+      response.end('Method not allowed.');
+      return;
+    }
+    let requestedPath;
+    try {
+      requestedPath = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+    } catch {
+      response.writeHead(400);
+      response.end('Invalid request path.');
+      return;
+    }
+    if (requestedPath === '/health') {
+      response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+      response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ ok: true, rooms: rooms.size }));
+      return;
+    }
+    const publicFile = requestedPath === '/' || ['/index.html', '/favicon.svg', '/icons.svg'].includes(requestedPath) ||
+      /^\/assets\/[a-z0-9_-]+\.(js|css|png|svg|webp|woff2?)$/i.test(requestedPath);
+    if (!publicFile) {
+      response.writeHead(404);
+      response.end('Not found.');
+      return;
+    }
+    const canonicalDist = await realpath(distDir);
+    const targetPath = await realpath(path.join(distDir, requestedPath === '/' ? 'index.html' : requestedPath));
+    if (!targetPath.startsWith(`${canonicalDist}${path.sep}`)) throw new Error('Outside public directory');
     const body = await readFile(targetPath);
     response.writeHead(200, {
       'content-type': mimeTypes[path.extname(targetPath)] || 'application/octet-stream',
       'cache-control': targetPath.endsWith('index.html') ? 'no-store' : 'public, max-age=31536000, immutable',
     });
-    response.end(body);
+    response.end(request.method === 'HEAD' ? undefined : body);
   } catch {
     response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
-    response.end('Build not found. Run npm run build before starting the production server.');
+    response.end('Not found.');
   }
 }
 
 const server = createServer(serveStatic);
-const wss = new WebSocketServer({ server, path: '/ws' });
+server.maxConnections = 128;
+server.headersTimeout = 10_000;
+server.requestTimeout = 10_000;
+server.keepAliveTimeout = 5000;
+server.maxRequestsPerSocket = 100;
+const wss = new WebSocketServer({ noServer: true, maxPayload: LIMITS.maxPayload, perMessageDeflate: false });
+
+server.on('upgrade', (request, socket, head) => {
+  socket.on('error', () => {});
+  let validPath = false;
+  try { validPath = new URL(request.url, 'http://localhost').pathname === '/ws'; } catch { /* Reject malformed upgrades. */ }
+  const ip = clientIp(request);
+  const fromIp = [...clients.values()].filter((client) => client.ip === ip).length;
+  if (!validPath || !allowedOrigin(request) || clients.size >= LIMITS.maxClients || fromIp >= LIMITS.maxClientsPerIp || !allowConnection(ip)) {
+    socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+    return;
+  }
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    ws.ip = ip;
+    wss.emit('connection', ws, request);
+  });
+});
 
 wss.on('connection', (ws) => {
   ws.id = createSocketId();
   ws.isAlive = true;
   clients.set(ws.id, ws);
+  ws.on('error', () => ws.terminate());
 
   ws.on('pong', () => {
     ws.isAlive = true;
   });
 
-  ws.on('message', (rawMessage) => {
+  ws.on('message', (rawMessage, isBinary) => {
+    ws.commandCount = (ws.commandCount || 0) + 1;
+    const now = Date.now();
+    if (!ws.commandWindow || now - ws.commandWindow >= 10_000) {
+      ws.commandWindow = now;
+      ws.commandCount = 1;
+    }
+    if (ws.commandCount > 40 || !allowCommand(ws.ip)) {
+      ws.close(1008, 'Too many commands');
+      return;
+    }
     let message = null;
     try {
+      if (isBinary) throw new Error('Binary messages are not supported');
       message = JSON.parse(rawMessage);
+      if (!validMessage(message)) throw new Error('Invalid command');
     } catch {
       sendGameError(ws, 'Malformed message.');
       return;
     }
 
-    handleCommandMessage(ws, message);
+    try {
+      handleCommandMessage(ws, message);
+    } catch {
+      sendGameError(ws, 'That command could not be processed.');
+    }
   });
 
   ws.on('close', () => {
@@ -508,6 +603,8 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    const player = room.players.find((entry) => entry.id === ws.playerId);
+    if (player?.socketId !== ws.id) return;
     disconnectPlayer(room, ws.playerId);
     broadcastRoom(room);
   });

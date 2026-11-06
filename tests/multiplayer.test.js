@@ -4,6 +4,7 @@ import { createServer } from 'node:net';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { WebSocket } from 'ws';
+import { sandboxedGame } from '../scripts/game-sandbox.mjs';
 
 test('ten real WebSocket players complete a hand on credit and rejoin the next hand', { timeout: 20000 }, async (t) => {
   const listener = createServer();
@@ -11,8 +12,9 @@ test('ten real WebSocket players complete a hand on credit and rejoin the next h
   await once(listener, 'listening');
   const port = listener.address().port;
   await new Promise((resolve) => listener.close(resolve));
-  const server = spawn(process.execPath, ['server/index.js'], {
-    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port) }, stdio: 'pipe',
+  const isolated = process.env.TEST_GAME_SANDBOX === '1' ? await sandboxedGame(process.cwd(), port) : null;
+  const server = spawn(isolated?.command || process.execPath, isolated?.args || ['server/index.js'], {
+    ...(isolated?.options || { env: { ...process.env, HOST: '127.0.0.1', PORT: String(port) } }), stdio: 'pipe',
   });
   const clients = [];
   t.after(async () => {

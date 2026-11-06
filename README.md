@@ -95,7 +95,7 @@ your PC, reached through a Cloudflare Quick Tunnel. Invite links keep the same
 Pages address. The frontend discovers the current tunnel from the public
 `server.json` on this repository's `pc-host` branch. No AWS service is required.
 
-Install once, using Node, the GitHub CLI signed in to this repository, and cloudflared:
+Install once, using Node 26 or newer, the GitHub CLI signed in to this repository, and cloudflared:
 
 ```bash
 brew install cloudflared
@@ -115,6 +115,28 @@ across server restarts. Quick Tunnels have no uptime guarantee.
 Logs are in `.pc-host.local/server.log` and `.pc-host.local/error.log`.
 GitHub CLI credentials stay in the existing local credential store. Only the
 public tunnel URL and its update time are published, never player data or tokens.
+
+### PC protection
+
+The game process runs inside a macOS deny-by-default sandbox. It can read only
+the game runtime, public build and required system libraries; it cannot read
+personal files, write files, launch a shell, contact other local services, or
+make outbound network connections. Node's permission flags add a second layer,
+and the game receives a clean environment without GitHub credentials or SSH
+agents. Its V8 heap is capped at 256 MB. The address publisher runs separately.
+Hosting refuses to start if the sandbox cannot be applied.
+
+Node binds only to localhost. Cloudflare forwards only to that local game port;
+no router port forwarding is needed. HTTP serves an allowlist of public build
+assets and rejects filesystem escapes. WebSockets validate command types,
+reject messages over 16 KB, limit commands/connections/rooms, and reject browser
+origins other than the game origin and the permanent Pages origin. Room codes
+use cryptographic randomness; host actions still require the host session.
+
+These controls reduce risk, but cannot guarantee protection from every future
+OS, runtime or tunnel vulnerability. Keep macOS, Node and cloudflared updated.
+Run `npm audit` when updating the app. `npm run host:install` must be rerun if a
+Node upgrade removes the executable path recorded in the login service.
 
 After a code update, rebuild and restart the service between games:
 

@@ -106,6 +106,7 @@ function Home() {
               type="text"
               placeholder="Enter name"
               value={username}
+              maxLength={20}
               onChange={(event) => setUsername(event.target.value)}
             />
           </label>
