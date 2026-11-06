@@ -145,6 +145,16 @@ test('a guest cannot grant themselves host privileges with a player ID', async (
     roomId: created.roomId, playerToken: state.hostPlayerId, config: { startingChips: 2000 },
   }, 'game_error');
   assert.match(denied.message, /Only the host/);
+  const switchIdentity = await command(guest, 'reconnect_room', {
+    roomId: created.roomId, playerToken: created.playerToken,
+  }, 'game_error');
+  assert.match(switchIdentity.message, /another player/);
+  const otherHost = await connect();
+  const other = await command(otherHost, 'create_room', { username: 'Other host QA' }, 'room_created');
+  const switchRoom = await command(guest, 'update_config', {
+    roomId: other.roomId, playerToken: other.playerToken, config: { tableName: 'Wrong room' },
+  }, 'game_error');
+  assert.match(switchRoom.message, /Player session not found/);
 });
 
 test('a browser from another website cannot open the game WebSocket', async () => {

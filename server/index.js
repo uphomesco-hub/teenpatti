@@ -86,6 +86,7 @@ function getRoom(ws, roomId) {
 }
 
 function resolvePlayerId(room, ws, playerToken) {
+  if (ws.roomId && ws.roomId !== room.id) return '';
   if (ws.playerId && room.players.some((player) => player.id === ws.playerId)) {
     const player = room.players.find((entry) => entry.id === ws.playerId);
     return player.socketId === ws.id && ws.roomId === room.id ? ws.playerId : '';
@@ -253,6 +254,10 @@ function handleJoinRoom(ws, payload) {
 function handleReconnectRoom(ws, payload) {
   if (ws.roomId && ws.roomId !== normalizeRoomId(payload.roomId)) {
     sendGameError(ws, 'Leave your current table before reconnecting elsewhere.');
+    return;
+  }
+  if (ws.playerId && ws.playerToken !== payload.playerToken) {
+    sendGameError(ws, 'Leave your current player session before reconnecting as another player.');
     return;
   }
   const room = getRoom(ws, payload.roomId);

@@ -57,3 +57,16 @@ test('failed discovery can recover and uses the updated PC address', async () =>
     assert.deepEqual(connections, ['wss://new-game.trycloudflare.com/ws']);
   });
 });
+
+test('a replaced tab does not repeatedly steal the session back', async () => {
+  await withTransport('http://127.0.0.1:8787/', async (socket) => {
+    await socket.connect();
+    socket.session = { roomId: 'ABC123', playerToken: 'stored-token' };
+    const event = new Event('close');
+    Object.assign(event, { code: 1000, reason: 'Session moved to a new connection' });
+    socket.ws.dispatchEvent(event);
+    assert.equal(socket.explicitlyLeaving, true);
+    assert.equal(socket.reconnectTimer, null);
+    assert.equal(socket.session.playerToken, 'stored-token');
+  });
+});

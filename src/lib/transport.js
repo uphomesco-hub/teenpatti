@@ -139,10 +139,16 @@ class WebSocketTransport {
         this.handleMessage(event.data);
       });
 
-      ws.addEventListener('close', () => {
+      ws.addEventListener('close', (event) => {
         window.clearTimeout(timeoutId);
         this.connectPromise = null;
         this.ws = null;
+
+        if (event.code === 1000 && event.reason === 'Session moved to a new connection') {
+          this.explicitlyLeaving = true;
+          this.dispatch('connect_error', { message: 'This player session is open in another tab. Reload here to take over.' });
+          return;
+        }
 
         if (!this.explicitlyLeaving) {
           this.dispatch('connect_error', { message: SERVER_LEFT_MESSAGE });
